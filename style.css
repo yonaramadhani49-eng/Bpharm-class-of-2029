@@ -1189,26 +1189,37 @@ input {
   }
 }
   .cr-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  grid-template-columns: repeat(3, 1fr);
+}
 
-  .cr-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    min-height: 170px;
-  }
+.cr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 170px;
+}
 
-  .cr-card small {
-    margin-top: auto;
-  }
+.cr-card small {
+  margin-top: auto;
+}
 
-  .memory-gallery {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.memory-gallery {
+  grid-template-columns: repeat(3, 1fr);
+}
 
-  .memory-card img {
-    height: 120px;
-  }
+.memory-card img {
+  height: 120px;
+}
+}
+
+/* MEMORY TAP */
+.memory-card {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.memory-card img {
+  cursor: pointer;
+  pointer-events: none;
 }
