@@ -669,7 +669,7 @@ function setupMemoryViewer() {console.log('MEMORY VIEWER STARTED');
       closeViewer();
     }
   });
-document.addEventListener('click', event => {
+document.addEventListener('pointerup', event => {
   const card = event.target.closest('.memory-card');
 
   if (!card) return;
@@ -686,7 +686,7 @@ document.addEventListener('click', event => {
   
             }
   /* =====================================================
-     SHOW LOVE
+     SHOW LOVE💕 
   ====================================================== */
 
   async function loadHeartCount() {
