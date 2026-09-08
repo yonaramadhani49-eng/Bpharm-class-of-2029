@@ -631,7 +631,56 @@
       }
     );
   }
+function setupMemoryViewer() {
+  const viewer = $('#memoryViewer');
+  const image = $('#memoryViewerImage');
+  const caption = $('#memoryViewerCaption');
+  const close = $('#memoryViewerClose');
 
+  if (!viewer || !image || !close) return;
+
+  function openViewer(src, text) {
+    image.src = src;
+    caption.textContent = text || '';
+    viewer.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeViewer() {
+    viewer.classList.add('hidden');
+    image.src = '';
+    caption.textContent = '';
+    document.body.style.overflow = 'hidden';
+  }
+
+  close.addEventListener('click', closeViewer);
+
+  viewer.addEventListener('click', event => {
+    if (event.target === viewer) {
+      closeViewer();
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (
+      event.key === 'Escape' &&
+      !viewer.classList.contains('hidden')
+    ) {
+      closeViewer();
+    }
+  });
+
+  document.addEventListener('click', event => {
+    const img = event.target.closest('.memory-card img');
+
+    if (!img) return;
+
+    const card = img.closest('.memory-card');
+    const title = card?.querySelector('h3')?.textContent || '';
+
+    openViewer(img.src, title);
+  });
+            }
   /* =====================================================
      SHOW LOVE
   ====================================================== */
@@ -2104,8 +2153,9 @@
     setupNavigation();
 
     setupMessages();
-    setupMemories();
-    setupHearts();
+setupMemories();
+setupMemoryViewer();
+setupHearts();
     setupCR();
     setupCards();
     setupFaith();
