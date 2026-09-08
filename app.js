@@ -526,17 +526,22 @@
 
           } catch (error) {
 
-            console.error(
-              'Memory upload:',
-              error
-            );
+  console.error(
+    'Memory upload:',
+    error
+  );
 
-            event.target.value = '';
+  event.target.value = '';
 
-            toast(
-              'Photo upload failed. Check Storage policies.'
-            );
-          }
+  toast(
+    'UPLOAD ERROR: ' +
+    (
+      error?.message ||
+      error?.error_description ||
+      JSON.stringify(error)
+    )
+  );
+}
         }
       );
     }
