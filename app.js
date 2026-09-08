@@ -631,7 +631,7 @@
       }
     );
   }
-function setupMemoryViewer() {
+function setupMemoryViewer() {console.log('MEMORY VIEWER STARTED');
   const viewer = $('#memoryViewer');
   const image = $('#memoryViewerImage');
   const caption = $('#memoryViewerCaption');
