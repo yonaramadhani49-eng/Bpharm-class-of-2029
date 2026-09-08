@@ -1,126 +1,206 @@
 (() => {
   'use strict';
 
-  const SUPABASE_URL = 'https://hketlksydaqmuiysozdh.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_5EwGCtzUhnbeGa_1idFARg_bCBa3KH5';
+  /* =====================================================
+     BPHARM ONE — CLASS OF 2029
+     Supabase-powered interactive memory website
+  ====================================================== */
+
+  const SUPABASE_URL =
+    'https://hketlksydaqmuiysozdh.supabase.co';
+
+  const SUPABASE_KEY =
+    'sb_publishable_5EwGCtzUhnbeGa_1idFARg_bCBa3KH5';
 
   let sb = null;
 
-  const $ = (s, root = document) => root.querySelector(s);
-  const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
+  const $ = (selector, root = document) =>
+    root.querySelector(selector);
 
-  const esc = (v = '') =>
-    String(v).replace(/[&<>"']/g, c => ({
+  const $$ = (selector, root = document) =>
+    Array.from(root.querySelectorAll(selector));
+
+  const esc = (value = '') =>
+    String(value).replace(/[&<>"']/g, char => ({
       '&': '&amp;',
       '<': '&lt;',
       '>': '&gt;',
       '"': '&quot;',
       "'": '&#39;'
-    }[c]));
+    }[char]));
 
-  const clean = (v, max = 1000) =>
-    String(v || '').trim().slice(0, max);
+  const clean = (value, max = 1000) =>
+    String(value || '').trim().slice(0, max);
 
-  const timeAgo = iso => {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '';
+  function timeAgo(iso) {
 
-    const sec = Math.max(
-      1,
-      Math.floor((Date.now() - d.getTime()) / 1000)
-    );
+    const date = new Date(iso);
 
-    if (sec < 60) return `${sec}s ago`;
-
-    const min = Math.floor(sec / 60);
-    if (min < 60) return `${min}m ago`;
-
-    const hr = Math.floor(min / 60);
-    if (hr < 24) return `${hr}h ago`;
-
-    return `${Math.floor(hr / 24)}d ago`;
-  };
-
-  function toast(text) {
-    let t = $('#toast');
-
-    if (!t) {
-      t = document.createElement('div');
-      t.id = 'toast';
-      document.body.appendChild(t);
+    if (Number.isNaN(date.getTime())) {
+      return '';
     }
 
-    t.textContent = text;
-    t.classList.add('show');
+    const seconds = Math.max(
+      1,
+      Math.floor(
+        (Date.now() - date.getTime()) / 1000
+      )
+    );
+
+    if (seconds < 60) {
+      return `${seconds}s ago`;
+    }
+
+    const minutes =
+      Math.floor(seconds / 60);
+
+    if (minutes < 60) {
+      return `${minutes}m ago`;
+    }
+
+    const hours =
+      Math.floor(minutes / 60);
+
+    if (hours < 24) {
+      return `${hours}h ago`;
+    }
+
+    return `${Math.floor(hours / 24)}d ago`;
+  }
+
+  /* =====================================================
+     TOAST
+  ====================================================== */
+
+  function toast(message) {
+
+    const box = $('#toast');
+
+    if (!box) return;
+
+    box.textContent = message;
+
+    box.classList.add('show');
 
     clearTimeout(window.__bpharmToast);
 
-    window.__bpharmToast = setTimeout(() => {
-      t.classList.remove('show');
-    }, 2800);
+    window.__bpharmToast =
+      setTimeout(() => {
+        box.classList.remove('show');
+      }, 2800);
   }
 
-  // =========================
-  // NAVIGATION
-  // =========================
+  /* =====================================================
+     PAGE NAVIGATION
+  ====================================================== */
 
   function go(id) {
-    const target = document.getElementById(id);
+
+    const target =
+      document.getElementById(id);
 
     if (!target) {
-      console.warn('Section not found:', id);
+      console.warn(
+        'Page not found:',
+        id
+      );
       return;
     }
 
-    target.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
+    $$('.page.active').forEach(page => {
+      page.classList.remove('active');
     });
 
+    target.classList.add('active');
+
     try {
-      history.replaceState(null, '', '#' + id);
+      history.replaceState(
+        null,
+        '',
+        '#' + id
+      );
     } catch (_) {}
+
+    window.scrollTo(0, 0);
   }
 
   function setupNavigation() {
-    $$('[data-next]').forEach(button => {
-      button.addEventListener('click', event => {
-        event.preventDefault();
-        go(button.dataset.next);
+
+    $$('[data-next]')
+      .forEach(button => {
+
+        button.addEventListener(
+          'click',
+          event => {
+
+            event.preventDefault();
+
+            const page =
+              button.dataset.next;
+
+            if (page) {
+              go(page);
+            }
+          }
+        );
       });
-    });
+
+    /* Open page from URL hash */
+    const hash =
+      window.location.hash
+        .replace('#', '');
+
+    if (
+      hash &&
+      document.getElementById(hash)
+    ) {
+      go(hash);
+    }
   }
 
-  // =========================
-  // SUPABASE
-  // =========================
+  /* =====================================================
+     SUPABASE
+  ====================================================== */
 
   function setupSupabase() {
+
     try {
+
       if (
         !window.supabase ||
-        typeof window.supabase.createClient !== 'function'
+        typeof window.supabase.createClient !==
+          'function'
       ) {
-        console.error('Supabase library was not loaded.');
+
+        console.error(
+          'Supabase library unavailable.'
+        );
+
         return false;
       }
 
-      sb = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
+      sb =
+        window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_KEY
+        );
 
       return true;
 
     } catch (error) {
-      console.error('Supabase initialization error:', error);
+
+      console.error(
+        'Supabase initialization:',
+        error
+      );
+
       return false;
     }
   }
 
-  // =========================
-  // MESSAGE REACTIONS
-  // =========================
+  /* =====================================================
+     MEMORIES
+  ====================================================== */
 
   async function reactionCount(
     table,
@@ -128,10 +208,15 @@
     id,
     reaction
   ) {
+
     if (!sb) return 0;
 
     try {
-      const { count, error } = await sb
+
+      const {
+        count,
+        error
+      } = await sb
         .from(table)
         .select('*', {
           count: 'exact',
@@ -140,474 +225,61 @@
         .eq(idField, id)
         .eq('reaction', reaction);
 
-      if (error) return 0;
+      if (error) {
+        return 0;
+      }
 
       return count || 0;
 
     } catch (error) {
-      console.error('Reaction count:', error);
+
+      console.error(
+        'Reaction count:',
+        error
+      );
+
       return 0;
     }
   }
-
-  // =========================
-  // CLASS WALL
-  // =========================
-
-  async function messageHTML(m) {
-
-    const reactions = ['❤️', '😂', '💊'];
-
-    const counts = await Promise.all(
-      reactions.map(r =>
-        reactionCount(
-          'message_reactions',
-          'message_id',
-          m.id,
-          r
-        )
-      )
-    );
-
-    return `
-      <div class="feeditem" data-id="${esc(m.id)}">
-
-        <p>“${esc(m.message)}”</p>
-
-        <small>
-          ${
-            m.anonymous
-              ? 'Anonymous'
-              : esc(m.name || 'BPharm One')
-          }
-          · ${timeAgo(m.created_at)}
-        </small>
-
-        <div class="feedactions">
-
-          ${reactions.map((r, i) => `
-            <button
-              type="button"
-              data-react-message="${esc(m.id)}"
-              data-reaction="${r}">
-              ${r} <i>${counts[i]}</i>
-            </button>
-          `).join('')}
-
-          <button
-            type="button"
-            class="replybtn"
-            data-reply="${esc(m.id)}">
-            💬 Reply
-          </button>
-
-        </div>
-
-        <div
-          class="replybox hidden"
-          id="reply-${esc(m.id)}">
-
-          <input
-            type="text"
-            placeholder="Your name">
-
-          <textarea
-            placeholder="Write a reply..."></textarea>
-
-          <button
-            type="button"
-            class="secondary"
-            data-send-reply="${esc(m.id)}">
-            SEND REPLY
-          </button>
-
-          <div
-            class="replies"
-            id="replies-${esc(m.id)}">
-          </div>
-
-        </div>
-
-      </div>
-    `;
-  }
-
-  async function loadMessages() {
-
-    const feed = $('#wallFeed');
-
-    if (!feed || !sb) return;
-
-    try {
-
-      const { data, error } = await sb
-        .from('messages')
-        .select('*')
-        .order('created_at', {
-          ascending: false
-        })
-        .limit(50);
-
-      if (error) throw error;
-
-      if (!data || !data.length) {
-
-        feed.innerHTML = `
-          <div class="feeditem">
-            <p>
-              No messages yet.
-              Be the first to leave one.
-            </p>
-          </div>
-        `;
-
-        return;
-      }
-
-      const html = await Promise.all(
-        data.map(messageHTML)
-      );
-
-      feed.innerHTML = html.join('');
-
-    } catch (error) {
-
-      console.error('Class Wall:', error);
-
-      feed.innerHTML = `
-        <div class="feeditem">
-          <p>
-            Class Wall is temporarily unavailable.
-          </p>
-        </div>
-      `;
-    }
-  }
-
-  async function loadReplies(messageId) {
-
-    const box = $(`#replies-${messageId}`);
-
-    if (!box || !sb) return;
-
-    try {
-
-      const { data, error } = await sb
-        .from('replies')
-        .select('*')
-        .eq('message_id', messageId)
-        .order('created_at', {
-          ascending: true
-        });
-
-      if (error) throw error;
-
-      box.innerHTML = (data || [])
-        .map(r => `
-          <div class="replyitem">
-
-            <strong>
-              ${
-                r.anonymous
-                  ? 'Anonymous'
-                  : esc(r.name || 'BPharm One')
-              }
-            </strong>
-
-            <p>${esc(r.reply)}</p>
-
-          </div>
-        `)
-        .join('');
-
-    } catch (error) {
-
-      console.error('Replies:', error);
-    }
-  }
-
-  function setupMessages() {
-
-    const post = $('#postMessage');
-
-    if (post) {
-
-      post.addEventListener(
-        'click',
-        async event => {
-
-          event.preventDefault();
-
-          if (!sb) {
-            toast('Supabase is not connected.');
-            return;
-          }
-
-          const message =
-            clean($('#message')?.value, 800);
-
-          if (!message) {
-            toast('Write something first.');
-            return;
-          }
-
-          const name =
-            clean($('#name')?.value, 80) ||
-            'Anonymous';
-
-          const anonymous =
-            $('#anonymousMessage')?.checked ?? false;
-
-          try {
-
-            const { error } =
-              await sb
-                .from('messages')
-                .insert({
-                  message,
-                  name,
-                  anonymous
-                });
-
-            if (error) throw error;
-
-            if ($('#message'))
-              $('#message').value = '';
-
-            if ($('#name'))
-              $('#name').value = '';
-
-            if ($('#anonymousMessage'))
-              $('#anonymousMessage').checked = false;
-
-            toast('Posted to the class wall.');
-
-            await loadMessages();
-
-          } catch (error) {
-
-            console.error('Post message:', error);
-
-            toast(
-              'Could not post. Check your Supabase policies.'
-            );
-          }
-        }
-      );
-    }
-
-    const feed = $('#wallFeed');
-
-    if (!feed) return;
-
-    feed.addEventListener(
-      'click',
-      async event => {
-
-        const reaction =
-          event.target.closest(
-            '[data-react-message]'
-          );
-
-        if (reaction) {
-
-          const id =
-            reaction.dataset.reactMessage;
-
-          const emoji =
-            reaction.dataset.reaction;
-
-          const key =
-            `msgreact:${id}:${emoji}`;
-
-          if (localStorage.getItem(key)) {
-
-            toast(
-              'You already gave this reaction.'
-            );
-
-            return;
-          }
-
-          try {
-
-            const { error } =
-              await sb
-                .from('message_reactions')
-                .insert({
-                  message_id: id,
-                  reaction: emoji
-                });
-
-            if (error) throw error;
-
-            localStorage.setItem(key, '1');
-
-            const counter =
-              reaction.querySelector('i');
-
-            if (counter) {
-
-              counter.textContent =
-                Number(counter.textContent) + 1;
-            }
-
-            reaction.classList.add('pop');
-
-          } catch (error) {
-
-            console.error(
-              'Message reaction:',
-              error
-            );
-
-            toast(
-              'Reaction could not be saved.'
-            );
-          }
-
-          return;
-        }
-
-        const reply =
-          event.target.closest(
-            '[data-reply]'
-          );
-
-        if (reply) {
-
-          const id = reply.dataset.reply;
-
-          const box = $(`#reply-${id}`);
-
-          if (box) {
-
-            box.classList.toggle('hidden');
-
-            if (
-              !box.classList.contains('hidden')
-            ) {
-              loadReplies(id);
-            }
-          }
-
-          return;
-        }
-
-        const send =
-          event.target.closest(
-            '[data-send-reply]'
-          );
-
-        if (send) {
-
-          const id =
-            send.dataset.sendReply;
-
-          const box =
-            $(`#reply-${id}`);
-
-          if (!box || !sb) return;
-
-          const inputs =
-            box.querySelectorAll(
-              'input, textarea'
-            );
-
-          const name =
-            clean(inputs[0]?.value, 80) ||
-            'Anonymous';
-
-          const replyText =
-            clean(inputs[1]?.value, 500);
-
-          if (!replyText) {
-
-            toast(
-              'Write a reply first.'
-            );
-
-            return;
-          }
-
-          try {
-
-            const { error } =
-              await sb
-                .from('replies')
-                .insert({
-                  message_id: id,
-                  name,
-                  reply: replyText,
-                  anonymous:
-                    name === 'Anonymous'
-                });
-
-            if (error) throw error;
-
-            if (inputs[1])
-              inputs[1].value = '';
-
-            toast('Reply posted.');
-
-            loadReplies(id);
-
-          } catch (error) {
-
-            console.error(
-              'Reply:',
-              error
-            );
-
-            toast(
-              'Reply could not be saved.'
-            );
-          }
-        }
-      }
-    );
-  }
-
-  // =========================
-  // MEMORIES
-  // =========================
 
   async function loadMemories() {
 
     const gallery =
       $('#memoryGallery');
 
-    if (!gallery || !sb) return;
+    if (!gallery || !sb) {
+      return;
+    }
 
     try {
 
-      const { data, error } =
-        await sb
-          .from('memories')
-          .select('*')
-          .order('created_at', {
-            ascending: false
-          })
-          .limit(60);
+      const {
+        data,
+        error
+      } = await sb
+        .from('memories')
+        .select('*')
+        .order('created_at', {
+          ascending: false
+        })
+        .limit(60);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      if (!data || !data.length) {
+      if (
+        !data ||
+        !data.length
+      ) {
 
         gallery.innerHTML = `
-          <div class="memory-card">
-
-            <div class="photo-placeholder">
-
-              📸
-
-              <span>
-                The class memory wall is waiting
-                for its first throwback.
-              </span>
-
-            </div>
-
+          <div class="empty-state">
+            <span>📸</span>
+            <p>
+              No memories yet.<br>
+              The first throwback can come from anyone.
+            </p>
           </div>
         `;
 
@@ -623,22 +295,22 @@
 
         const counts =
           await Promise.all(
-            reactions.map(r =>
+            reactions.map(reaction =>
               reactionCount(
                 'memory_reactions',
                 'memory_id',
                 memory.id,
-                r
+                reaction
               )
             )
           );
 
         cards.push(`
-          <article class="memory-card shared-memory">
+          <article class="memory-card">
 
             <img
               src="${esc(memory.image_url)}"
-              alt="Class memory"
+              alt="BPharm One class memory"
               loading="lazy">
 
             <h3>
@@ -662,14 +334,17 @@
 
             <div class="reactions">
 
-              ${reactions.map((r, i) => `
-                <button
-                  type="button"
-                  data-react-memory="${esc(memory.id)}"
-                  data-reaction="${r}">
-                  ${r} <i>${counts[i]}</i>
-                </button>
-              `).join('')}
+              ${reactions.map(
+                (reaction, index) => `
+                  <button
+                    type="button"
+                    data-react-memory="${esc(memory.id)}"
+                    data-reaction="${reaction}">
+                    ${reaction}
+                    <i>${counts[index]}</i>
+                  </button>
+                `
+              ).join('')}
 
             </div>
 
@@ -683,14 +358,15 @@
     } catch (error) {
 
       console.error(
-        'Memories:',
+        'Loading memories:',
         error
       );
 
       gallery.innerHTML = `
-        <div class="memory-card">
+        <div class="empty-state">
+          <span>📸</span>
           <p>
-            Memories are temporarily unavailable.
+            Memories could not be loaded right now.
           </p>
         </div>
       `;
@@ -727,7 +403,16 @@
           const file =
             event.target.files?.[0];
 
-          if (!file || !sb) return;
+          if (!file) return;
+
+          if (!sb) {
+
+            toast(
+              'The shared memory service is unavailable.'
+            );
+
+            return;
+          }
 
           if (
             file.size >
@@ -761,12 +446,13 @@
           const name =
             clean(
               prompt(
-                'Your name (or leave blank for Anonymous):'
+                'Your name (leave blank for Anonymous):'
               ),
               80
             );
 
-          const anonymous = !name;
+          const anonymous =
+            !name;
 
           try {
 
@@ -776,7 +462,7 @@
                 '_'
               );
 
-            const uuid =
+            const randomId =
               window.crypto &&
               typeof crypto.randomUUID ===
                 'function'
@@ -786,43 +472,49 @@
                     .slice(2)}`;
 
             const path =
-              `${uuid}-${safe}`;
+              `${randomId}-${safe}`;
 
-            const { error: uploadError } =
-              await sb.storage
-                .from('memories')
-                .upload(
-                  path,
-                  file,
-                  {
-                    upsert: false,
-                    contentType: file.type,
-                    cacheControl: '3600'
-                  }
-                );
+            const {
+              error: uploadError
+            } = await sb.storage
+              .from('memories')
+              .upload(
+                path,
+                file,
+                {
+                  upsert: false,
+                  contentType: file.type,
+                  cacheControl: '3600'
+                }
+              );
 
-            if (uploadError)
+            if (uploadError) {
               throw uploadError;
+            }
 
-            const { data: urlData } =
-              sb.storage
-                .from('memories')
-                .getPublicUrl(path);
+            const {
+              data: urlData
+            } = sb.storage
+              .from('memories')
+              .getPublicUrl(path);
 
-            const { error } =
-              await sb
-                .from('memories')
-                .insert({
-                  name:
-                    name ||
-                    'Anonymous',
-                  caption,
-                  image_url:
-                    urlData.publicUrl,
-                  anonymous
-                });
+            const {
+              error
+            } = await sb
+              .from('memories')
+              .insert({
+                name:
+                  name ||
+                  'Anonymous',
+                caption,
+                image_url:
+                  urlData.publicUrl,
+                anonymous
+              });
 
-            if (error) throw error;
+            if (error) {
+              throw error;
+            }
 
             event.target.value = '';
 
@@ -852,84 +544,92 @@
     const gallery =
       $('#memoryGallery');
 
-    if (gallery) {
+    if (!gallery) return;
 
-      gallery.addEventListener(
-        'click',
-        async event => {
+    gallery.addEventListener(
+      'click',
+      async event => {
 
-          const button =
-            event.target.closest(
-              '[data-react-memory]'
-            );
+        const button =
+          event.target.closest(
+            '[data-react-memory]'
+          );
 
-          if (!button || !sb) return;
-
-          const id =
-            button.dataset.reactMemory;
-
-          const reaction =
-            button.dataset.reaction;
-
-          const key =
-            `memreact:${id}:${reaction}`;
-
-          if (localStorage.getItem(key)) {
-
-            toast(
-              'You already gave this reaction.'
-            );
-
-            return;
-          }
-
-          try {
-
-            const { error } =
-              await sb
-                .from('memory_reactions')
-                .insert({
-                  memory_id: id,
-                  reaction
-                });
-
-            if (error) throw error;
-
-            localStorage.setItem(
-              key,
-              '1'
-            );
-
-            const counter =
-              button.querySelector('i');
-
-            if (counter) {
-
-              counter.textContent =
-                Number(counter.textContent) + 1;
-            }
-
-            button.classList.add('pop');
-
-          } catch (error) {
-
-            console.error(
-              'Memory reaction:',
-              error
-            );
-
-            toast(
-              'Reaction could not be saved.'
-            );
-          }
+        if (!button || !sb) {
+          return;
         }
-      );
-    }
+
+        const id =
+          button.dataset.reactMemory;
+
+        const reaction =
+          button.dataset.reaction;
+
+        const key =
+          `memory:${id}:${reaction}`;
+
+        if (
+          localStorage.getItem(key)
+        ) {
+
+          toast(
+            'You already gave this reaction.'
+          );
+
+          return;
+        }
+
+        try {
+
+          const {
+            error
+          } = await sb
+            .from('memory_reactions')
+            .insert({
+              memory_id: id,
+              reaction
+            });
+
+          if (error) {
+            throw error;
+          }
+
+          localStorage.setItem(
+            key,
+            '1'
+          );
+
+          const counter =
+            button.querySelector('i');
+
+          if (counter) {
+
+            counter.textContent =
+              Number(
+                counter.textContent
+              ) + 1;
+          }
+
+          button.classList.add('pop');
+
+        } catch (error) {
+
+          console.error(
+            'Memory reaction:',
+            error
+          );
+
+          toast(
+            'Reaction could not be saved.'
+          );
+        }
+      }
+    );
   }
 
-  // =========================
-  // HEART WALL
-  // =========================
+  /* =====================================================
+     SHOW LOVE
+  ====================================================== */
 
   async function loadHeartCount() {
 
@@ -937,19 +637,26 @@
 
     try {
 
-      const { count, error } =
-        await sb
-          .from('hearts')
-          .select('*', {
-            count: 'exact',
-            head: true
-          });
+      const {
+        count,
+        error
+      } = await sb
+        .from('hearts')
+        .select('*', {
+          count: 'exact',
+          head: true
+        });
 
-      if (!error && $('#heartCount')) {
+      if (
+        !error &&
+        $('#heartCount')
+      ) {
 
         $('#heartCount').textContent =
           `❤️ ${count || 0} hearts shared`;
       }
+
+      await loadShowLove();
 
     } catch (error) {
 
@@ -957,6 +664,103 @@
         'Heart count:',
         error
       );
+    }
+  }
+
+  async function loadShowLove() {
+
+    const feed =
+      $('#loveFeed');
+
+    if (!feed || !sb) {
+      return;
+    }
+
+    try {
+
+      const {
+        data,
+        error
+      } = await sb
+        .from('hearts')
+        .select(
+          'sender_name, receiver_name, created_at'
+        )
+        .order('created_at', {
+          ascending: false
+        })
+        .limit(100);
+
+      if (error) {
+        throw error;
+      }
+
+      if (
+        !data ||
+        !data.length
+      ) {
+
+        feed.innerHTML = `
+          <div class="love-empty">
+            No hearts shared yet.<br>
+            Be the first if you want.
+          </div>
+        `;
+
+        return;
+      }
+
+      feed.innerHTML =
+        data.map(heart => `
+
+          <div class="love-card">
+
+            <div class="love-line">
+
+              <span>❤️</span>
+
+              <strong>
+                ${esc(
+                  heart.sender_name ||
+                  'Anonymous'
+                )}
+              </strong>
+
+              <span class="love-arrow">
+                →
+              </span>
+
+              <strong>
+                ${esc(
+                  heart.receiver_name ||
+                  'BPharm One'
+                )}
+              </strong>
+
+            </div>
+
+            <small>
+              ${timeAgo(
+                heart.created_at
+              )}
+            </small>
+
+          </div>
+
+        `).join('');
+
+    } catch (error) {
+
+      console.error(
+        'Show Love:',
+        error
+      );
+
+      feed.innerHTML = `
+        <div class="love-empty">
+          Hearts could not be loaded right now.
+        </div>
+      `;
     }
   }
 
@@ -976,7 +780,7 @@
         if (!sb) {
 
           toast(
-            'Supabase is not connected.'
+            'The shared love service is unavailable.'
           );
 
           return;
@@ -1002,38 +806,43 @@
             $('#heartSender')?.value,
             80
           ) ||
-          'A BPharm One classmate';
+          'Anonymous';
 
         try {
 
-          const { error } =
-            await sb
-              .from('hearts')
-              .insert({
-                sender_name: sender,
-                receiver_name: receiver
-              });
+          const {
+            error
+          } = await sb
+            .from('hearts')
+            .insert({
+              sender_name: sender,
+              receiver_name: receiver
+            });
 
-          if (error) throw error;
+          if (error) {
+            throw error;
+          }
 
-          if ($('#heartTarget'))
+          if ($('#heartTarget')) {
             $('#heartTarget').value = '';
+          }
 
-          if ($('#heartSender'))
+          if ($('#heartSender')) {
             $('#heartSender').value = '';
+          }
 
           button.classList.add('pop');
 
           await loadHeartCount();
 
           toast(
-            `❤️ Heartsent to ${receiver}.`
+            `❤️ Heart sent to ${receiver}.`
           );
 
         } catch (error) {
 
           console.error(
-            'Heart:',
+            'Send heart:',
             error
           );
 
@@ -1045,11 +854,690 @@
     );
   }
 
-  // =========================
-  // CARD STUDIO
-  // =========================
+  /* =====================================================
+     CLASS WALL
+  ====================================================== */
 
-  let selectedTemplate =
+  async function messageHTML(message) {
+
+    const reactions =
+      ['❤️', '😂', '💊'];
+
+    const counts =
+      await Promise.all(
+        reactions.map(reaction =>
+          reactionCount(
+            'message_reactions',
+            'message_id',
+            message.id,
+            reaction
+          )
+        )
+      );
+
+    return `
+
+      <div
+        class="feeditem"
+        data-id="${esc(message.id)}">
+
+        <p>
+          “${esc(message.message)}”
+        </p>
+
+        <small>
+          ${
+            message.anonymous
+              ? 'Anonymous'
+              : esc(
+                  message.name ||
+                  'BPharm One'
+                )
+          }
+          · ${timeAgo(
+            message.created_at
+          )}
+        </small>
+
+        <div class="feedactions">
+
+          ${reactions.map(
+            (reaction, index) => `
+
+              <button
+                type="button"
+                data-react-message="${esc(message.id)}"
+                data-reaction="${reaction}">
+
+                ${reaction}
+                <i>${counts[index]}</i>
+
+              </button>
+
+            `
+          ).join('')}
+
+          <button
+            type="button"
+            data-reply="${esc(message.id)}">
+
+            💬 Reply
+
+          </button>
+
+        </div>
+
+        <div
+          class="replybox hidden"
+          id="reply-${esc(message.id)}">
+
+          <input
+            type="text"
+            placeholder="Your name">
+
+          <textarea
+            placeholder="Write a reply..."></textarea>
+
+          <button
+            type="button"
+            class="secondary"
+            data-send-reply="${esc(message.id)}">
+
+            SEND REPLY
+
+          </button>
+
+          <div
+            class="replies"
+            id="replies-${esc(message.id)}">
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  async function loadMessages() {
+
+    const feed =
+      $('#wallFeed');
+
+    if (!feed || !sb) {
+      return;
+    }
+
+    try {
+
+      const {
+        data,
+        error
+      } = await sb
+        .from('messages')
+        .select('*')
+        .order('created_at', {
+          ascending: false
+        })
+        .limit(50);
+
+      if (error) {
+        throw error;
+      }
+
+      if (
+        !data ||
+        !data.length
+      ) {
+
+        feed.innerHTML = `
+          <div class="empty-state">
+            <span>💬</span>
+            <p>
+              The wall is waiting for its first message.
+            </p>
+          </div>
+        `;
+
+        return;
+      }
+
+      const html =
+        await Promise.all(
+          data.map(messageHTML)
+        );
+
+      feed.innerHTML =
+        html.join('');
+
+    } catch (error) {
+
+      console.error(
+        'Class Wall:',
+        error
+      );
+
+      feed.innerHTML = `
+        <div class="empty-state">
+          <span>💬</span>
+          <p>
+            Class Wall could not load right now.
+          </p>
+        </div>
+      `;
+    }
+  }
+
+  async function loadReplies(messageId) {
+
+    const box =
+      $(`#replies-${messageId}`);
+
+    if (!box || !sb) {
+      return;
+    }
+
+    try {
+
+      const {
+        data,
+        error
+      } = await sb
+        .from('replies')
+        .select('*')
+        .eq(
+          'message_id',
+          messageId
+        )
+        .order('created_at', {
+          ascending: true
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      box.innerHTML =
+        (data || [])
+          .map(reply => `
+
+            <div class="replyitem">
+
+              <strong>
+                ${
+                  reply.anonymous
+                    ? 'Anonymous'
+                    : esc(
+                        reply.name ||
+                        'BPharm One'
+                      )
+                }
+              </strong>
+
+              <p>
+                ${esc(reply.reply)}
+              </p>
+
+            </div>
+
+          `)
+          .join('');
+
+    } catch (error) {
+
+      console.error(
+        'Replies:',
+        error
+      );
+    }
+  }
+
+  function setupMessages() {
+
+    const post =
+      $('#postMessage');
+
+    if (post) {
+
+      post.addEventListener(
+        'click',
+        async event => {
+
+          event.preventDefault();
+
+          if (!sb) {
+
+            toast(
+              'The Class Wall is unavailable.'
+            );
+
+            return;
+      }
+  const message =
+            clean(
+              $('#message')?.value,
+              800
+            );
+
+          if (!message) {
+
+            toast(
+              'Write something first.'
+            );
+
+            return;
+          }
+
+          const name =
+            clean(
+              $('#name')?.value,
+              80
+            ) ||
+            'Anonymous';
+
+          const anonymous =
+            $('#anonymousMessage')
+              ?.checked ??
+            false;
+
+          try {
+
+            const {
+              error
+            } = await sb
+              .from('messages')
+              .insert({
+                message,
+                name,
+                anonymous
+              });
+
+            if (error) {
+              throw error;
+            }
+
+            if ($('#message')) {
+              $('#message').value = '';
+            }
+
+            if ($('#name')) {
+              $('#name').value = '';
+            }
+
+            if ($('#anonymousMessage')) {
+              $('#anonymousMessage').checked =
+                false;
+            }
+
+            toast(
+              'Posted to the class wall.'
+            );
+
+            await loadMessages();
+
+          } catch (error) {
+
+            console.error(
+              'Post message:',
+              error
+            );
+
+            toast(
+              'Could not post the message.'
+            );
+          }
+        }
+      );
+    }
+
+    const feed =
+      $('#wallFeed');
+
+    if (!feed) return;
+
+    feed.addEventListener(
+      'click',
+      async event => {
+
+        const reaction =
+          event.target.closest(
+            '[data-react-message]'
+          );
+
+        if (reaction) {
+
+          const id =
+            reaction.dataset.reactMessage;
+
+          const emoji =
+            reaction.dataset.reaction;
+
+          const key =
+            `message:${id}:${emoji}`;
+
+          if (
+            localStorage.getItem(key)
+          ) {
+
+            toast(
+              'You already gave this reaction.'
+            );
+
+            return;
+          }
+
+          try {
+
+            const {
+              error
+            } = await sb
+              .from('message_reactions')
+              .insert({
+                message_id: id,
+                reaction: emoji
+              });
+
+            if (error) {
+              throw error;
+            }
+
+            localStorage.setItem(
+              key,
+              '1'
+            );
+
+            const counter =
+              reaction.querySelector('i');
+
+            if (counter) {
+
+              counter.textContent =
+                Number(
+                  counter.textContent
+                ) + 1;
+            }
+
+            reaction.classList.add('pop');
+
+          } catch (error) {
+
+            console.error(
+              'Message reaction:',
+              error
+            );
+
+            toast(
+              'Reaction could not be saved.'
+            );
+          }
+
+          return;
+        }
+
+        const replyButton =
+          event.target.closest(
+            '[data-reply]'
+          );
+
+        if (replyButton) {
+
+          const id =
+            replyButton.dataset.reply;
+
+          const box =
+            $(`#reply-${id}`);
+
+          if (box) {
+
+            box.classList.toggle(
+              'hidden'
+            );
+
+            if (
+              !box.classList.contains(
+                'hidden'
+              )
+            ) {
+
+              loadReplies(id);
+            }
+          }
+
+          return;
+        }
+
+        const sendButton =
+          event.target.closest(
+            '[data-send-reply]'
+          );
+
+        if (sendButton) {
+
+          const id =
+            sendButton.dataset.sendReply;
+
+          const box =
+            $(`#reply-${id}`);
+
+          if (!box || !sb) {
+            return;
+          }
+
+          const inputs =
+            box.querySelectorAll(
+              'input, textarea'
+            );
+
+          const name =
+            clean(
+              inputs[0]?.value,
+              80
+            ) ||
+            'Anonymous';
+
+          const replyText =
+            clean(
+              inputs[1]?.value,
+              500
+            );
+
+          if (!replyText) {
+
+            toast(
+              'Write a reply first.'
+            );return;
+          }
+
+          try {
+
+            const {
+              error
+            } = await sb
+              .from('replies')
+              .insert({
+                message_id: id,
+                name,
+                reply: replyText,
+                anonymous:
+                  name === 'Anonymous'
+              });
+
+            if (error) {
+              throw error;
+            }
+
+            if (inputs[1]) {
+              inputs[1].value = '';
+            }
+
+            toast(
+              'Reply posted.'
+            );
+
+            await loadReplies(id);
+
+          } catch (error) {
+
+            console.error(
+              'Reply:',
+              error
+            );
+
+            toast(
+              'Reply could not be saved.'
+            );
+          }
+        }
+      }
+    );
+  }
+
+  /* =====================================================
+     CR APPRECIATION
+  ====================================================== */
+
+  const crContent = {
+
+    adina: {
+      title: '🥰❤️ Madam Adina',
+      text: `
+        Madam Adina, thank you for stepping forward
+        to represent our class.
+
+        Your role was not simply about carrying a title.
+        You helped communicate our concerns, represent
+        our ideas and stand with the class when decisions
+        had to be made.
+
+        Thank you for listening, for representing us,
+        and for being part of the effort that kept
+        BPharm One moving together.
+
+        We appreciate you.
+      `
+    },
+
+    julius: {
+      title: '(pharma tips💊) Julius',
+      text: `
+        Julius, thank you for taking the responsibility
+        of representing BPharm One.
+
+        You stepped into the position and helped give
+        the class a voice. You represented our interests,
+        helped communicate important matters and worked
+        toward choices that could benefit the class.
+
+        The role required patience, communication and
+        responsibility, and we appreciate the effort
+        you put into it.
+
+        Thank you for representing us.
+      `
+    },
+
+    paschal: {
+      title: '✨ Paschal',
+      text: `
+        Paschal, we also want to recognize the work you
+        did while representing BPharm One.
+
+        You did a great job carrying the responsibility,
+        standing for the class and helping bring people
+        together.
+
+        Although your time in the position came to an end
+        because of circumstances outside your ability to
+        control, the contribution you made remains part
+        of our first-year story.
+
+        Thank you for serving, representing us and helping
+        build the class we became.
+      `
+    }
+
+  };
+
+  function setupCR() {
+
+    const modal =
+      $('#crModal');
+
+    const content =
+      $('#crModalContent');
+
+    const close =
+      $('#closeCr');
+
+    if (!modal || !content) {
+      return;
+    }
+
+    $$('.cr-card')
+      .forEach(card => {
+
+        card.addEventListener(
+          'click',
+          () => {
+
+            const person =
+              card.dataset.cr;
+
+            const data =
+              crContent[person];
+
+            if (!data) return;
+
+            content.innerHTML = `
+              <h3>
+                ${esc(data.title)}
+              </h3>
+
+              ${data.text
+                .trim()
+                .split(/\n\s*\n/)
+                .map(paragraph =>
+                  `<p>${esc(
+                    paragraph.trim()
+                  )}</p>`
+                )
+                .join('')}
+            `;
+
+            modal.classList.remove(
+              'hidden'
+            );
+          }
+        );
+      });
+
+    close?.addEventListener(
+      'click',
+      () => {
+        modal.classList.add(
+          'hidden'
+        );
+      }
+    );
+
+    modal.addEventListener(
+      'click',
+      event => {
+
+        if (
+          event.target === modal
+        ) {
+
+          modal.classList.add(
+            'hidden'
+          );
+        }
+      }
+    );
+  }
+
+  /* =====================================================
+     CARD STUDIO
+  ====================================================== */let selectedTemplate =
     'APPRECIATION';
 
   function setupCards() {
@@ -1071,8 +1559,8 @@
               'APPRECIATION';
 
             $$('.templates button')
-              .forEach(x =>
-                x.classList.remove(
+              .forEach(other =>
+                other.classList.remove(
                   'selected'
                 )
               );
@@ -1091,201 +1579,213 @@
         );
       });
 
-    $('#cardText')?.addEventListener(
-      'input',
-      event => {
+    $('#cardText')
+      ?.addEventListener(
+        'input',
+        event => {
 
-        if ($('#previewText')) {
+          if ($('#previewText')) {
 
-          $('#previewText').textContent =
-            event.target.value ||
-            'Your message will appear here.';
+            $('#previewText')
+              .textContent =
+              event.target.value ||
+              'Your message will appear here.';
+          }
         }
-      }
-    );
+      );
 
-    $('#cardFrom')?.addEventListener(
-      'input',
-      event => {
+    $('#cardFrom')
+      ?.addEventListener(
+        'input',
+        event => {
 
-        if ($('#previewFrom')) {
+          if ($('#previewFrom')) {
 
-          $('#previewFrom').textContent =
-            event.target.value
-              ? `— ${event.target.value}`
-              : '';
+            $('#previewFrom')
+              .textContent =
+              event.target.value
+                ? `— ${event.target.value}`
+                : '';
+          }
         }
-      }
-    );
+      );
 
-    $('#downloadCard')?.addEventListener(
-      'click',
-      event => {
+    $('#downloadCard')
+      ?.addEventListener(
+        'click',
+        event => {
 
-        event.preventDefault();
+          event.preventDefault();
 
-        const canvas =
-          document.createElement('canvas');
+          const canvas =
+            document.createElement(
+              'canvas'
+            );
 
-        canvas.width = 1080;
-        canvas.height = 1350;
+          canvas.width = 1080;
+          canvas.height = 1350;
 
-        const c =
-          canvas.getContext('2d');
+          const ctx =
+            canvas.getContext('2d');
 
-        if (!c) {
+          if (!ctx) {
+            toast(
+              'Card creation failed.'
+            );
+            return;
+          }
 
-          toast(
-            'Card preview is unavailable.'
+          const gradient =
+            ctx.createLinearGradient(
+              0,
+              0,
+              1080,
+              1350
+            );
+
+          gradient.addColorStop(
+            0,
+            '#120b20'
           );
 
-          return;
-        }
+          gradient.addColorStop(
+            1,
+            '#35134b'
+          );
 
-        const g =
-          c.createLinearGradient(
+          ctx.fillStyle =
+            gradient;
+
+          ctx.fillRect(
             0,
             0,
             1080,
             1350
           );
 
-        g.addColorStop(
-          0,
-          '#120b20'
-        );
+          ctx.fillStyle =
+            '#ffffff';
 
-        g.addColorStop(
-          1,
-          '#35134b'
-        );
+          ctx.textAlign =
+            'center';
 
-        c.fillStyle = g;
+          ctx.font =
+            'bold 42px Arial';
 
-        c.fillRect(
-          0,
-          0,
-          1080,
-          1350
-        );
-
-        c.fillStyle = '#fff';
-
-        c.textAlign = 'center';
-
-        c.font =
-          'bold 42px Arial';
-
-        c.fillText(
-          'BPHARM ONE · CLASS OF 2029',
-          540,
-          170
-        );
-
-        c.font =
-          'bold 68px Arial';
-
-        c.fillText(
-          selectedTemplate,
-          540,
-          300
-        );
-
-        const msg =
-          (
-            $('#cardText')?.value ||
-            'Your message will appear here.'
-          ).slice(0, 240);
-
-        wrapText(
-          c,
-          msg,
-          540,
-          520,
-          820,
-          58
-        );
-
-        c.font =
-          '38px Arial';
-
-        c.fillText(
-          $('#cardFrom')?.value
-            ? `— ${$('#cardFrom').value}`
-            : '',
-          540,
-          1050
-        );
-
-        c.font =
-          '30px Arial';
-
-        c.fillText(
-          'OUR FIRST CHAPTER',
-          540,
-          1210
-        );
-
-        const a =
-          document.createElement('a');
-
-        a.download =
-          'bpharm-one-card.png';
-
-        a.href =
-          canvas.toDataURL(
-            'image/png'
+          ctx.fillText(
+            'BPHARM ONE · CLASS OF 2029',
+            540,
+            170
           );
 
-        a.click();
+          ctx.font =
+            'bold 68px Arial';
 
-        toast(
-          'Card downloaded.'
-        );
-      }
-    );
+          ctx.fillText(
+            selectedTemplate,
+            540,
+            300
+          );
 
-    $('#postCard')?.addEventListener(
-      'click',
-      async event => {
+          const message =
+            (
+              $('#cardText')?.value ||
+              'Your message will appear here.'
+            ).slice(0, 240);
 
-        event.preventDefault();
+          wrapText(
+            ctx,
+            message,
+            540,
+            520,
+            820,
+            58
+          );
 
-        if (!sb) {
+          ctx.font =
+            '38px Arial';
+
+          ctx.fillText(
+            $('#cardFrom')?.value
+              ? `— ${$('#cardFrom').value}`
+              : '',
+            540,
+            1050
+          );
+
+          ctx.font =
+            '30px Arial';
+
+          ctx.fillText(
+            'OUR FIRST CHAPTER',
+            540,
+            1210
+          );
+
+          const link =
+            document.createElement(
+              'a'
+            );
+
+          link.download =
+            'bpharm-one-card.png';
+
+          link.href =
+            canvas.toDataURL(
+              'image/png'
+            );
+
+          link.click();
 
           toast(
-            'Supabase is not connected.'
+            'Card downloaded.'
           );
-
-          return;
         }
+      );
 
-        const message =
-          clean(
-            $('#cardText')?.value,
-            800
-          );
+    $('#postCard')
+      ?.addEventListener(
+        'click',
+        async event => {
 
-        if (!message) {
+          event.preventDefault();
 
-          toast(
-            'Write your card message first.'
-          );
+          if (!sb) {
 
-          return;
-        }
+            toast(
+              'Card sharing is unavailable.'
+            );
 
-        const name =
-          clean(
-            $('#cardFrom')?.value,
-            80
-          ) ||
-          'BPharm One';
+            return;
+          }
 
-        try {
+          const message =
+            clean(
+              $('#cardText')?.value,
+              800
+            );
 
-          const { error } =
-            await sb
+          if (!message) {
+
+            toast(
+              'Write your card message first.'
+            );
+
+            return;
+          }
+
+          const name =
+            clean(
+              $('#cardFrom')?.value,
+              80
+            ) ||
+            'BPharm One';
+
+          try {
+
+            const {
+              error
+            } = await sb
               .from('cards')
               .insert({
                 name,
@@ -1296,27 +1796,29 @@
                   selectedTemplate
               });
 
-          if (error) throw error;
+            if (error) {
+              throw error;
+            }
 
-          toast(
-            'Card posted.'
-          );
+            toast(
+              'Card posted.'
+            );
 
-          go('wall');
+            go('wall');
 
-        } catch (error) {
+          } catch (error) {
 
-          console.error(
-            'Card:',
-            error
-          );
+            console.error(
+              'Post card:',
+              error
+            );
 
-          toast(
-            'Could not post the card.'
-          );
+            toast(
+              'Could not post the card.'
+            );
+          }
         }
-      }
-    );
+      );
   }
 
   function wrapText(
@@ -1371,13 +1873,46 @@
     }
   }
 
-  // =========================
-  // TIME CAPSULE
-  // =========================
+  /* =====================================================
+     FAITH
+  ====================================================== */function setupFaith() {
+
+    const amen =
+      $('#amen');
+
+    if (!amen) return;
+
+    amen.addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+
+        amen.textContent =
+          'AMEN ✓';
+
+        amen.disabled =
+          true;
+
+        toast(
+          'Amen.'
+        );
+      }
+    );
+  }
+
+  /* =====================================================
+     TIME CAPSULE
+  ====================================================== */
 
   function setupCapsule() {
 
-    $('#seal')?.addEventListener(
+    const seal =
+      $('#seal');
+
+    if (!seal) return;
+
+    seal.addEventListener(
       'click',
       async event => {
 
@@ -1386,7 +1921,7 @@
         if (!sb) {
 
           toast(
-            'Supabase is not connected.'
+            'Time capsule is unavailable.'
           );
 
           return;
@@ -1418,26 +1953,31 @@
 
         try {
 
-          const { error } =
-            await sb
-              .from('time_capsule')
-              .insert({
-                name,
-                message,
-                unlock_year: 2029
-              });
+          const {
+            error
+          } = await sb
+            .from('time_capsule')
+            .insert({
+              name,
+              message,
+              unlock_year: 2029
+            });
 
-          if (error) throw error;
+          if (error) {
+            throw error;
+          }
 
           $('#sealed')
             ?.classList
             .remove('hidden');
 
-          if ($('#capsuleText'))
-            $('#capsuleText').value = '';
+          if ($('#capsuleText')) {
+            $('#capsuleText').value =
+              '';
+          }
 
           toast(
-            'Sealed for 2029.'
+            '🔒 Sealed for 2029.'
           );
 
         } catch (error) {
@@ -1453,36 +1993,23 @@
         }
       }
     );
-
-    $('#amen')?.addEventListener(
-      'click',
-      event => {
-
-        event.preventDefault();
-
-        event.currentTarget.textContent =
-          'AMEN ✓';
-
-        event.currentTarget.disabled =
-          true;
-
-        toast('Amen.');
-      }
-    );
   }
 
-  // =========================
-  // REALTIME
-  // =========================
+  /* =====================================================
+     REALTIME
+  ====================================================== */
 
-  function live(table, fn) {
+  function live(
+    table,
+    callback
+  ) {
 
     if (!sb) return;
 
     try {
 
       sb.channel(
-        `bpharm-${table}`
+        `bpharm-live-${table}`
       )
         .on(
           'postgres_changes',
@@ -1494,8 +2021,9 @@
           () => {
 
             try {
-              fn();
+              callback();
             } catch (error) {
+
               console.error(
                 `Realtime ${table}:`,
                 error
@@ -1503,18 +2031,20 @@
             }
           }
         )
-        .subscribe(status => {
+        .subscribe(
+          status => {
 
-          console.log(
-            `Realtime ${table}:`,
-            status
-          );
-        });
+            console.log(
+              `Realtime ${table}:`,
+              status
+            );
+          }
+        );
 
     } catch (error) {
 
       console.error(
-        `Realtime setup ${table}:`,
+        `Realtime ${table}:`,
         error
       );
     }
@@ -1551,87 +2081,30 @@
       'hearts',
       loadHeartCount
     );
-            }
-        // =========================
-  // SMALL UI
-  // =========================
-
-  function addPolish() {
-
-    const style =
-      document.createElement('style');
-
-    style.textContent = `
-      #toast {
-        position: fixed;
-        left: 50%;
-        bottom: 82px;
-        transform: translate(-50%, 20px);
-        opacity: 0;
-        pointer-events: none;
-        z-index: 9999;
-        background: #191321;
-        border: 1px solid #3a2a48;
-        color: #fff;
-        padding: 12px 16px;
-        border-radius: 999px;
-        font-size: 13px;
-        box-shadow: 0 10px 40px #0008;
-        transition: .25s ease;
-        max-width: 88vw;
-        text-align: center;
-      }
-
-      #toast.show {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
-
-      .replyitem {
-        border-left: 2px solid #765a91;
-        padding: 7px 0 7px 12px;
-        margin-top: 8px;
-      }
-
-      .replyitem p {
-        margin: 3px 0;
-        color: #c8bfce;
-      }
-
-      .feedactions button {
-        background: #211a2a;
-        border: 1px solid #292232;
-        color: #fff;
-        padding: 8px 10px;
-        border-radius: 999px;
-      }
-
-      .heartbox input {
-        box-sizing: border-box;
-      }
-    `;
-
-    document.head.appendChild(style);
   }
 
-  // =========================
-  // START
-  // =========================
+  /* =====================================================
+     START
+  ====================================================== */
 
   function init() {
 
-    // Navigation is initialized FIRST.
-    // Therefore Supabase problems cannot disable navigation.
+    /*
+      IMPORTANT:
+      Navigation starts BEFORE Supabase.
+      Therefore a Supabase problem can never
+      make the entire website's buttons stop working.
+    */
 
     setupNavigation();
 
     setupMessages();
     setupMemories();
     setupHearts();
+    setupCR();
     setupCards();
+    setupFaith();
     setupCapsule();
-
-    addPolish();
 
     const connected =
       setupSupabase();
@@ -1643,7 +2116,7 @@
       );
 
       toast(
-        'Site loaded, but Supabase is unavailable.'
+        'Site loaded. Shared features are temporarily unavailable.'
       );
 
       return;
@@ -1654,6 +2127,10 @@
     loadHeartCount();
 
     setupRealtime();
+
+    console.log(
+      'BPharm One — Class of 2029 loaded.'
+    );
   }
 
   if (
