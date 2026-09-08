@@ -751,7 +751,26 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js"></script>
 
+<!-- FULL-SCREEN MEMORY VIEWER -->
+<div id="memoryViewer" class="memory-viewer hidden">
+  <button
+    id="memoryViewerClose"
+    class="memory-viewer-close"
+    type="button"
+    aria-label="Close memory"
+  >
+    ×
+  </button>
+
+  <img id="memoryViewerImage" src="" alt="Memory">
+
+  <div
+    id="memoryViewerCaption"
+    class="memory-viewer-caption"
+  ></div>
+</div>
+
+<script src="app.js"></script>
 </body>
-  </html>
+</html>
