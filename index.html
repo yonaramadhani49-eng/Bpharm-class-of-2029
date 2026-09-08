@@ -1,15 +1,757 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0712"><title>BPharm One — Class of 2029</title><link rel="stylesheet" href="style.css"></head><body>
-<div id="app">
-<section class="hero screen" id="home"><div class="glow"></div><p class="eyebrow">BPHARM ONE · CLASS OF 2029</p><h1>Our First<br><span>Chapter.</span></h1><p class="lead">One year. One class. A thousand moments.</p><button class="primary" data-next="story">ENTER OUR STORY <b>→</b></button><div class="scrollhint">01 / 12</div></section>
-<section class="screen chapter" id="story"><p class="eyebrow">CHAPTER 01</p><h2>We actually<br><span>did it.</span></h2><div class="stat">YEAR ONE <strong>✓</strong></div><p>Whatever the results eventually say, this year demanded something from every one of us. We showed up, learned, struggled, laughed, helped each other and reached the other side.</p><button class="primary" data-next="timeline">REMEMBER THE JOURNEY →</button></section>
-<section class="screen" id="timeline"><p class="eyebrow">THE JOURNEY</p><h2>From the first day<br>to the final exam.</h2><div class="timeline"><article><small>01</small><h3>First lecture</h3><p>The beginning.</p></article><article><small>02</small><h3>First practical</h3><p>White coats, nervous hands and figuring things out.</p></article><article><small>03</small><h3>Assignments</h3><p>“When is the deadline again?”</p></article><article><small>04</small><h3>First exam</h3><p>Now it felt real.</p></article><article><small>05</small><h3>The chaos</h3><p>Pressure, laughter, questions — somehow we kept going.</p></article><article><small>06</small><h3>Final exam</h3><p>And suddenly, Year One was behind us.</p></article></div><button class="primary" data-next="memories">OPEN THE THROWBACKS →</button></section>
-<section class="screen" id="memories"><p class="eyebrow">THROWBACK MACHINE</p><h2>Wait… remember this?</h2><div id="memoryGallery" class="memory-gallery"></div><input id="memoryInput" type="file" accept="image/*" hidden><button class="secondary" id="addMemory">＋ ADD YOUR MEMORY</button><button class="primary" data-next="help">WE HELPED EACH OTHER →</button></section>
-<section class="screen" id="help"><p class="eyebrow">OUR CLASS</p><h2>We didn't all<br><span>walk alone.</span></h2><p class="long">We competed because we wanted to become better. But competition never had to mean leaving someone behind. We shared notes, explained difficult topics, answered questions, studied together and helped each other through moments when the pressure was heavy.</p><div class="pillgrid"><button>SHARED NOTES</button><button>EXPLAINED TOPICS</button><button>ANSWERED QUESTIONS</button><button>STUDIED TOGETHER</button></div><blockquote>Competition made us sharper.<br><strong>Helping made us a class.</strong></blockquote><button class="primary" data-next="hearts">GIVE SOMEONE A HEART →</button></section>
-<section class="screen" id="hearts"><p class="eyebrow">FOR EVERYONE</p><h2>A heart<br><span>for everyone.</span></h2><p class="long">We do not know what every person carried through this year. We do not know how every person felt after every exam. But every person who made it here deserves appreciation.</p><div class="heartbox"><div id="heartCount">❤️ 0 hearts shared</div><input id="heartTarget" placeholder="Who would you like to appreciate?"><input id="heartSender" placeholder="Your name (optional)"><button id="heartBtn" class="heartbtn">❤️ GIVE A HEART</button><small>No ranking. No competition. Just appreciation.</small></div><button class="primary" data-next="crs">MEET THE PEOPLE WHO STOOD FOR US →</button></section>
-<section class="screen" id="crs"><p class="eyebrow">APPRECIATION</p><h2>The people<br><span>who stood for us.</span></h2><div class="person" data-person="ad​ina"><h3>Madam Adina</h3><p>Represented us, defended our interests and worked to find options that served the class.</p><button class="secondary">READ APPRECIATION →</button></div><div class="person"><h3>Julius Samson</h3><p>Carried responsibility forward and helped represent the voices of BPharm One.</p><button class="secondary">READ APPRECIATION →</button></div><div class="person"><h3>Paschal</h3><p>Helped lead the beginning of our chapter, represented us and contributed to bringing the class together.</p><button class="secondary">READ APPRECIATION →</button></div><button class="primary" data-next="studio">MAKE A CARD →</button></section>
-<section class="screen" id="studio"><p class="eyebrow">CARD STUDIO</p><h2>Make something<br><span>they'll keep.</span></h2><div class="templates"><button>❤️<small>APPRECIATION</small></button><button>🙏<small>FAITH</small></button><button>🤝<small>FRIENDSHIP</small></button><button>😂<small>FUNNY</small></button><button>💊<small>BPHARM ONE</small></button><button>✨<small>CLASS OF 2029</small></button></div><textarea id="cardText" placeholder="Write your message..."></textarea><input id="cardFrom" placeholder="From (optional)"><div class="cardpreview"><span>BPHARM ONE · 2029 · <b id="previewTemplate">APPRECIATION</b></span><p id="previewText">Your message will appear here.</p><small id="previewFrom"></small></div><div class="buttonrow"><button class="secondary" id="downloadCard">DOWNLOAD</button><button class="primary" id="postCard">POST TO WALL →</button></div><button class="primary" data-next="wall">GO TO CLASS WALL →</button></section>
-<section class="screen" id="wall"><p class="eyebrow">CLASS WALL</p><h2>Say something<br><span>before you go.</span></h2><textarea id="message" placeholder="Write something to BPharm One..."></textarea><input id="name" placeholder="Your name"><label class="check"><input id="anonymousMessage" type="checkbox"> Post anonymously</label><button class="primary" id="postMessage">POST MESSAGE →</button><div id="wallFeed" class="feed"><div class="feeditem"><p>“To everyone who ever explained a topic to me when I did not understand it — thank you.”</p><small>Anonymous · just now</small><div>❤️ 23 · 😂 4 · 💊 9</div></div></div><button class="primary" data-next="faith">TRUST GOD WITH THE RESULTS →</button></section>
-<section class="screen calm" id="faith"><p class="eyebrow">A QUIET MOMENT</p><h2>You did your part.</h2><p class="long">We gave our effort, faced the pressure, helped one another and reached the end of this first chapter. Now there is a part we cannot control. Whatever the results bring, may we have the peace to trust God, the courage to keep going, and the hope that our efforts will bear good fruit.</p><button class="primary" id="amen">AMEN 🤍</button><button class="primary" data-next="capsule">WRITE TO FUTURE US →</button></section>
-<section class="screen" id="capsule"><p class="eyebrow">TIME CAPSULE</p><h2>For future<br><span>us.</span></h2><p>Write one message that should meet you again in 2029.</p><textarea id="capsuleText" placeholder="Dear future me..."></textarea><button class="primary" id="seal">🔒 SEAL UNTIL 2029</button><div id="sealed" class="sealed hidden">MESSAGE SEALED · 2026 → 2029</div><button class="primary" data-next="final">FINISH THE CHAPTER →</button></section>
-<section class="screen final" id="final"><p class="eyebrow">BPHARM ONE</p><h2>YEAR ONE<br><span>COMPLETED.</span></h2><p>Class of 2029</p><div class="finalline">This wasn't the end.<br><strong>It was our first chapter.</strong></div><button class="primary" data-next="home">↻ START AGAIN</button><p class="small">May God guide us to 2029.</p></section>
-</div><nav class="bottom"><button data-next="home">HOME</button><button data-next="timeline">STORY</button><button data-next="memories">MEMORIES</button><button data-next="wall">WALL</button></nav><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0813">
+  <meta name="description" content="BPharm One — Class of 2029. Our First Chapter.">
+  <title>BPharm One — Class of 2029</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- =========================
+       HOME
+  ========================== -->
+
+  <main class="page active" id="home">
+
+    <div class="page-inner hero-page">
+
+      <div class="eyebrow">BPHARM ONE · CLASS OF 2029</div>
+
+      <div class="hero-symbol">
+        <span>✦</span>
+        <span>♡</span>
+        <span>✦</span>
+      </div>
+
+      <h1>Our First<br><em>Chapter.</em></h1>
+
+      <p class="hero-sub">
+        One year. One class. A thousand moments.
+      </p>
+
+      <p class="muted">
+        This is not just a website.<br>
+        It is a little place to remember how Year One felt.
+      </p>
+
+      <button class="primary big-btn" data-next="done">
+        ENTER OUR STORY →
+      </button>
+
+      <p class="tiny">
+        Tap the button and experience the journey step by step.
+      </p>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       DONE
+  ========================== -->
+
+  <main class="page" id="done">
+
+    <div class="page-inner center-page">
+
+      <div class="number">01</div>
+
+      <div class="big-icon">✓</div>
+
+      <h2>We actually<br><em>did it.</em></h2>
+
+      <p class="large-text">
+        Somewhere between the first lecture, practicals,
+        assignments, presentations, questions, deadlines,
+        laughter and exam pressure, Year One became our story.
+      </p>
+
+      <p class="large-text">
+        We may not remember every lecture forever.
+        But we will remember the people who were there.
+      </p>
+
+      <div class="info-pill">
+        YEAR ONE · COMPLETED
+      </div>
+
+      <button class="primary" data-next="timeline">
+        REMEMBER THE JOURNEY →
+      </button>
+
+      <button class="ghost" data-next="memories">
+        SKIP AHEAD
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       TIMELINE
+  ========================== -->
+
+  <main class="page" id="timeline">
+
+    <div class="page-inner">
+
+      <div class="topline">
+        <span>02 / THE JOURNEY</span>
+        <span>YEAR ONE</span>
+      </div>
+
+      <h2>How it<br><em>started.</em></h2>
+
+      <p class="instruction">
+        Tap through the memories below. Nothing is compulsory.
+        Just enjoy the journey.
+      </p>
+
+      <div class="timeline-grid">
+
+        <div class="timeline-card">
+          <b>01</b>
+          <strong>First Lecture</strong>
+          <span>“Where are we sitting?”</span>
+        </div>
+
+        <div class="timeline-card">
+          <b>02</b>
+          <strong>First Practical</strong>
+          <span>Lab coats. Notes. Confusion.</span>
+        </div>
+
+        <div class="timeline-card">
+          <b>03</b>
+          <strong>Assignments</strong>
+          <span>Deadline approaching...</span>
+        </div>
+
+        <div class="timeline-card">
+          <b>04</b>
+          <strong>Presentations</strong>
+          <span>Everyone suddenly became a lecturer.</span>
+        </div>
+
+        <div class="timeline-card">
+          <b>05</b>
+          <strong>Discussions</strong>
+          <span>“Bro, explain this again.”</span>
+        </div>
+
+        <div class="timeline-card">
+          <b>06</b>
+          <strong>Exams</strong>
+          <span>And somehow... we survived.</span>
+        </div>
+
+      </div>
+
+      <div class="tip-box">
+        <span>💡</span>
+        <p>
+          The best memories are not always the biggest events.
+          Sometimes it was simply who sat next to you.
+        </p>
+      </div>
+
+      <button class="primary" data-next="memories">
+        OPEN THE THROWBACKS →
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       MEMORIES
+  ========================== -->
+
+  <main class="page" id="memories">
+
+    <div class="page-inner">
+
+      <div class="topline">
+        <span>03 / THROWBACK MACHINE</span>
+        <span>OPTIONAL</span>
+      </div>
+
+      <h2>Show us the<br><em>moment.</em></h2>
+
+      <div class="instruction-box">
+
+        <strong>HOW TO PARTICIPATE</strong>
+
+        <p>
+          Share a harmless class memory if you want.
+          It could be:
+        </p>
+
+        <ul>
+          <li>Someone presenting</li>
+          <li>Someone asking a question</li>
+          <li>Group presentation</li>
+          <li>Lab work</li>
+          <li>Class discussion</li>
+          <li>Someone sleeping in class 😴</li>
+          <li>A funny but respectful class moment</li>
+        </ul>
+
+        <small>
+          Please share respectful, non-offensive pictures only.
+        </small>
+
+      </div>
+
+      <button class="primary animated-btn" id="addMemory">
+        ＋ ADD A MEMORY
+      </button>
+
+      <input
+        type="file"
+        id="memoryInput"
+        accept="image/*"
+        hidden>
+
+      <div class="gallery-title">
+        <span>SHARED MEMORIES</span>
+        <small>Everyone can see these</small>
+      </div>
+
+      <div id="memoryGallery" class="memory-gallery">
+
+        <div class="empty-state">
+          <span>📸</span>
+          <p>
+            No memories yet.<br>
+            The first throwback can come from anyone.
+          </p>
+        </div>
+
+      </div>
+
+      <button class="secondary" data-next="love">
+        CONTINUE TO SHOW LOVE →
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       SHOW LOVE
+  ========================== -->
+
+  <main class="page" id="love">
+
+    <div class="page-inner">
+
+      <div class="topline">
+        <span>04 / SHOW LOVE</span>
+        <span>OPTIONAL</span>
+      </div>
+
+      <h2>A heart for<br><em>someone.</em></h2>
+
+      <p class="instruction">
+        Choose someone's name and send them a heart.
+        You can appreciate anyone in the class.
+      </p>
+
+      <div class="love-form">
+
+        <label>
+          YOUR NAME
+          <input
+            id="heartSender"
+            type="text"
+            maxlength="80"
+            placeholder="Your name (optional)">
+        </label>
+
+        <label>
+          SEND YOUR HEART TO
+          <input
+            id="heartTarget"
+            type="text"
+            maxlength="100"
+            placeholder="Person's name">
+        </label>
+
+        <button class="primary animated-btn" id="heartBtn">
+          ❤️ SEND HEART
+        </button>
+
+      </div>
+
+      <div id="heartCount" class="heart-count">
+        ❤️ 0 hearts shared
+      </div>
+
+      <div class="show-love-heading">
+        <strong>SHOW LOVE</strong>
+        <span>See who appreciated whom</span>
+      </div>
+
+      <div id="loveFeed" class="love-feed">
+
+        <div class="love-empty">
+          No hearts shared yet.<br>
+          Be the first if you want.
+        </div>
+
+      </div>
+
+      <button class="secondary" data-next="wall">
+        GO TO CLASS WALL →
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       CLASS WALL
+  ========================== -->
+
+  <main class="page" id="wall">
+
+    <div class="page-inner">
+
+      <div class="topline">
+        <span>05 / CLASS WALL</span>
+        <span>SHARED CHAT</span>
+      </div>
+
+      <h2>Leave a little<br><em>something.</em></h2>
+
+      <div class="instruction-box compact">
+
+        <strong>HOW IT WORKS</strong>
+
+        <p>
+          Write a memory, joke, appreciation,
+          encouragement or message to the class.
+        </p>
+
+        <small>
+          Everyone can see what is posted.
+          You may post anonymously.
+        </small>
+
+      </div>
+
+      <div class="wall-form">
+
+        <input
+          id="name"
+          type="text"
+          maxlength="80"
+          placeholder="Your name">
+
+        <textarea
+          id="message"
+          maxlength="800"
+          placeholder="Write something for BPharm One..."></textarea>
+
+        <label class="check">
+          <input
+            type="checkbox"
+            id="anonymousMessage">
+          Post anonymously
+        </label>
+
+        <button
+          class="primary animated-btn"
+          id="postMessage">
+          POST TO CLASS WALL
+        </button>
+
+      </div>
+
+      <div class="feed-title">
+        <strong>CLASS WALL</strong>
+        <span>Live shared messages</span>
+      </div>
+
+      <div id="wallFeed" class="wall-feed">
+
+        <div class="empty-state">
+          <span>💬</span>
+          <p>
+            The wall is waiting for its first message.
+          </p>
+        </div>
+
+      </div>
+
+      <button class="secondary" data-next="cr">
+        MEET OUR CLASS REPRESENTATIVES →
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       CR APPRECIATION
+  ========================== -->
+
+  <main class="page" id="cr">
+
+    <div class="page-inner">
+
+      <div class="topline">
+        <span>06 / APPRECIATION</span>
+        <span>OUR CRs</span>
+      </div>
+
+      <h2>The people who<br><em>represented us.</em></h2>
+
+      <p class="instruction">
+        Tap a card to read the full appreciation.
+      </p>
+
+      <div class="cr-grid">
+
+        <button class="cr-card" data-cr="adina">
+          <span class="cr-mark">🥰❤️</span>
+          <strong>Madam Adina</strong>
+          <small>TAP TO READ</small>
+        </button>
+
+        <button class="cr-card" data-cr="julius">
+          <span class="cr-mark">💊</span>
+          <strong>(pharma tips💊) Julius</strong>
+          <small>TAP TO READ</small>
+        </button>
+
+        <button class="cr-card" data-cr="paschal">
+          <span class="cr-mark">✨</span>
+          <strong>✨ Paschal</strong>
+          <small>TAP TO READ</small>
+        </button>
+
+      </div>
+
+      <div id="crModal" class="modal hidden">
+
+        <div class="modal-box">
+
+          <button class="modal-close" id="closeCr">
+            ×
+          </button>
+
+          <div id="crModalContent"></div>
+
+        </div>
+
+      </div>
+
+      <button class="primary" data-next="studio">
+        CREATE A CLASS CARD →
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       CARD STUDIO
+  ========================== -->
+
+  <main class="page" id="studio">
+
+    <div class="page-inner">
+
+      <div class="topline">
+        <span>07 / CARD STUDIO</span>
+        <span>OPTIONAL</span>
+      </div>
+
+      <h2>Make something<br><em>worth keeping.</em></h2>
+
+      <p class="instruction">
+        Choose a template, write your message,
+        preview it, then download or post it.
+      </p>
+
+      <div class="templates">
+
+        <button class="selected">
+          <span>♡</span>
+          <small>APPRECIATION</small>
+        </button>
+
+        <button>
+          <span>🙏</span>
+          <small>FAITH</small>
+        </button>
+
+        <button>
+          <span>🤝</span>
+          <small>FRIENDSHIP</small>
+        </button>
+
+        <button>
+          <span>😂</span>
+          <small>FUNNY</small>
+        </button>
+
+        <button>
+          <span>💊</span>
+          <small>BPHARM ONE</small>
+        </button>
+
+      </div>
+
+      <div class="card-editor">
+
+        <textarea
+          id="cardText"
+          maxlength="800"
+          placeholder="Write your message..."></textarea>
+
+        <input
+          id="cardFrom"
+          maxlength="80"
+          placeholder="Your name">
+
+      </div>
+
+      <div class="card-preview">
+
+        <small id="previewTemplate">
+          APPRECIATION
+        </small>
+
+        <p id="previewText">
+          Your message will appear here.
+        </p>
+
+        <span id="previewFrom"></span>
+
+        <b>BPHARM ONE · 2029</b>
+
+      </div>
+
+      <div class="button-row">
+
+        <button
+          class="secondary"
+          id="downloadCard">
+          DOWNLOAD CARD
+        </button>
+
+        <button
+          class="primary"
+          id="postCard">
+          POST CARD
+        </button>
+
+      </div>
+
+      <button class="secondary" data-next="faith">
+        CONTINUE →
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       FAITH
+  ========================== -->
+
+  <main class="page" id="faith">
+
+    <div class="page-inner center-page">
+
+      <div class="number">08</div>
+
+      <div class="big-icon">🙏</div>
+
+      <h2>You did<br><em>your part.</em></h2>
+
+      <p class="large-text">
+        We studied. We attended. We asked questions.
+        We tried. We helped one another.
+      </p>
+
+      <p class="large-text">
+        Now we leave the results in God's hands.
+        Whatever comes, may we receive it with faith,
+        courage and gratitude.
+      </p>
+
+      <div class="verse-box">
+        “Commit your work to the Lord,
+        and your plans will be established.”
+        <small>— Proverbs 16:3</small>
+      </div>
+
+      <button class="primary animated-btn" id="amen">
+        AMEN
+      </button>
+
+      <button class="ghost" data-next="capsule">
+        CONTINUE TO TIME CAPSULE →
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       TIME CAPSULE
+  ========================== -->
+
+  <main class="page" id="capsule">
+
+    <div class="page-inner center-page">
+
+      <div class="number">09</div>
+
+      <div class="big-icon">🔒</div>
+
+      <h2>For future<br><em>us.</em></h2>
+
+      <p class="large-text">
+        Write something for the people we will become
+        by the time we reach 2029.
+      </p>
+
+      <p class="instruction">
+        This is completely optional.
+        Write only what you want future-you to remember.
+      </p>
+
+      <textarea
+        id="capsuleText"
+        class="capsule-input"
+        maxlength="800"
+        placeholder="Dear future BPharm One..."></textarea>
+
+      <button class="primary animated-btn" id="seal">
+        🔒 SEAL FOR 2029
+      </button>
+
+      <div id="sealed" class="sealed hidden">
+        ✓ SEALED · FOR 2029
+      </div>
+
+      <button class="ghost" data-next="finish">
+        SKIP →
+      </button>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       FINISH
+  ========================== -->
+
+  <main class="page" id="finish">
+
+    <div class="page-inner center-page final-page">
+
+      <div class="final-stars">✦ ✦ ✦</div>
+
+      <p class="eyebrow">
+        BPHARM ONE · CLASS OF 2029
+      </p>
+
+      <h1>
+        YEAR ONE<br>
+        <em>COMPLETED.</em>
+      </h1>
+
+      <div class="final-line"></div>
+
+      <p class="large-text">
+        This wasn't the end.
+      </p>
+
+      <h3>
+        It was our first chapter.
+      </h3>
+
+      <p class="muted">
+        Keep the memories.<br>
+        Keep the friendships.<br>
+        Keep moving.
+      </p>
+
+      <button class="primary big-btn" data-next="home">
+        ↻ START AGAIN
+      </button>
+
+      <p class="tiny">
+        May God guide us to 2029.
+      </p>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       BOTTOM NAVIGATION
+  ========================== -->
+
+  <nav class="bottom-nav">
+
+    <button data-next="home">
+      <span>⌂</span>
+      HOME
+    </button>
+
+    <button data-next="timeline">
+      <span>◈</span>
+      STORY
+    </button>
+
+    <button data-next="memories">
+      <span>📸</span>
+      MEMORIES
+    </button>
+
+    <button data-next="love">
+      <span>❤️</span>
+      LOVE
+    </button>
+
+    <button data-next="wall">
+      <span>💬</span>
+      WALL
+    </button>
+
+  </nav>
+
+
+  <div id="toast"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+
+</body>
+  </html>
