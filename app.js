@@ -669,17 +669,21 @@ function setupMemoryViewer() {console.log('MEMORY VIEWER STARTED');
       closeViewer();
     }
   });
+document.addEventListener('click', event => {
+  const card = event.target.closest('.memory-card');
 
-  document.addEventListener('click', event => {
-    const img = event.target.closest('.memory-card img');
+  if (!card) return;
 
-    if (!img) return;
+  const img = card.querySelector('img');
 
-    const card = img.closest('.memory-card');
-    const title = card?.querySelector('h3')?.textContent || '';
+  if (!img || !img.src) return;
 
-    openViewer(img.src, title);
-  });
+  const title =
+    card.querySelector('h3')?.textContent || '';
+
+  openViewer(img.src, title);
+});
+  
             }
   /* =====================================================
      SHOW LOVE
