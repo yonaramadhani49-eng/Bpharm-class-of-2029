@@ -3,7 +3,8 @@
 
   /* =====================================================
      BPHARM ONE — CLASS OF 2029
-     Supabase-powered interactive memory website
+     PROFESSIONAL INTERACTIVE MEMORY EXPERIENCE
+     Supabase-powered
   ====================================================== */
 
   const SUPABASE_URL =
@@ -13,6 +14,12 @@
     'sb_publishable_5EwGCtzUhnbeGa_1idFARg_bCBa3KH5';
 
   let sb = null;
+
+  const realtimeChannels = new Map();
+
+  /* =====================================================
+     DOM HELPERS
+  ====================================================== */
 
   const $ = (selector, root = document) =>
     root.querySelector(selector);
@@ -30,9 +37,19 @@
     }[char]));
 
   const clean = (value, max = 1000) =>
-    String(value || '').trim().slice(0, max);
+    String(value || '')
+      .trim()
+      .slice(0, max);
+
+  const sleep = ms =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+  /* =====================================================
+     TIME
+  ====================================================== */
 
   function timeAgo(iso) {
+    if (!iso) return '';
 
     const date = new Date(iso);
 
@@ -51,21 +68,25 @@
       return `${seconds}s ago`;
     }
 
-    const minutes =
-      Math.floor(seconds / 60);
+    const minutes = Math.floor(seconds / 60);
 
     if (minutes < 60) {
       return `${minutes}m ago`;
     }
 
-    const hours =
-      Math.floor(minutes / 60);
+    const hours = Math.floor(minutes / 60);
 
     if (hours < 24) {
       return `${hours}h ago`;
     }
 
-    return `${Math.floor(hours / 24)}d ago`;
+    const days = Math.floor(hours / 24);
+
+    if (days < 7) {
+      return `${days}d ago`;
+    }
+
+    return date.toLocaleDateString();
   }
 
   /* =====================================================
@@ -73,21 +94,64 @@
   ====================================================== */
 
   function toast(message) {
-
     const box = $('#toast');
 
-    if (!box) return;
+    if (!box) {
+      console.log('[BPharm One]', message);
+      return;
+    }
 
     box.textContent = message;
-
     box.classList.add('show');
 
     clearTimeout(window.__bpharmToast);
 
-    window.__bpharmToast =
-      setTimeout(() => {
-        box.classList.remove('show');
-      }, 2800);
+    window.__bpharmToast = setTimeout(() => {
+      box.classList.remove('show');
+    }, 2800);
+  }
+
+  /* =====================================================
+     BUTTON FEEDBACK
+  ====================================================== */
+
+  function pulse(button) {
+    if (!button) return;
+
+    button.classList.remove('pop');
+
+    requestAnimationFrame(() => {
+      button.classList.add('pop');
+    });
+
+    setTimeout(() => {
+      button.classList.remove('pop');
+    }, 450);
+  }
+
+  function setBusy(button, busy, text = '') {
+    if (!button) return;
+
+    if (busy) {
+      button.dataset.originalText =
+        button.textContent;
+
+      button.disabled = true;
+
+      if (text) {
+        button.textContent = text;
+      }
+    } else {
+      button.disabled = false;
+
+      if (
+        button.dataset.originalText
+      ) {
+        button.textContent =
+          button.dataset.originalText;
+        delete button.dataset.originalText;
+      }
+    }
   }
 
   /* =====================================================
@@ -95,13 +159,12 @@
   ====================================================== */
 
   function go(id) {
-
     const target =
       document.getElementById(id);
 
     if (!target) {
       console.warn(
-        'Page not found:',
+        'BPharm One: page not found:',
         id
       );
       return;
@@ -121,34 +184,30 @@
       );
     } catch (_) {}
 
-    window.scrollTo(0, 0);
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   }
 
   function setupNavigation() {
+    $$('[data-next]').forEach(button => {
+      button.addEventListener('click', event => {
+        event.preventDefault();
 
-    $$('[data-next]')
-      .forEach(button => {
+        const page =
+          button.dataset.next;
 
-        button.addEventListener(
-          'click',
-          event => {
-
-            event.preventDefault();
-
-            const page =
-              button.dataset.next;
-
-            if (page) {
-              go(page);
-            }
-          }
-        );
+        if (page) {
+          pulse(button);
+          go(page);
+        }
       });
+    });
 
-    /* Open page from URL hash */
     const hash =
       window.location.hash
-        .replace('#', '');
+        .replace(/^#/, '');
 
     if (
       hash &&
@@ -163,19 +222,15 @@
   ====================================================== */
 
   function setupSupabase() {
-
     try {
-
       if (
         !window.supabase ||
         typeof window.supabase.createClient !==
           'function'
       ) {
-
         console.error(
           'Supabase library unavailable.'
         );
-
         return false;
       }
 
@@ -188,7 +243,6 @@
       return true;
 
     } catch (error) {
-
       console.error(
         'Supabase initialization:',
         error
@@ -199,7 +253,7 @@
   }
 
   /* =====================================================
-     MEMORIES
+     GENERIC REACTION COUNT
   ====================================================== */
 
   async function reactionCount(
@@ -208,11 +262,9 @@
     id,
     reaction
   ) {
-
     if (!sb) return 0;
 
     try {
-
       const {
         count,
         error
@@ -226,13 +278,16 @@
         .eq('reaction', reaction);
 
       if (error) {
+        console.error(
+          'Reaction count:',
+          error
+        );
         return 0;
       }
 
       return count || 0;
 
     } catch (error) {
-
       console.error(
         'Reaction count:',
         error
@@ -242,17 +297,17 @@
     }
   }
 
-  async function loadMemories() {
+  /* =====================================================
+     MEMORIES
+  ====================================================== */
 
+  async function loadMemories() {
     const gallery =
       $('#memoryGallery');
 
-    if (!gallery || !sb) {
-      return;
-    }
+    if (!gallery || !sb) return;
 
     try {
-
       const {
         data,
         error
@@ -268,11 +323,7 @@
         throw error;
       }
 
-      if (
-        !data ||
-        !data.length
-      ) {
-
+      if (!data || !data.length) {
         gallery.innerHTML = `
           <div class="empty-state">
             <span>📸</span>
@@ -286,16 +337,15 @@
         return;
       }
 
+      const reactionTypes =
+        ['❤️', '😂', '🔥', '💊'];
+
       const cards = [];
 
       for (const memory of data) {
-
-        const reactions =
-          ['❤️', '😂', '🔥', '💊'];
-
         const counts =
           await Promise.all(
-            reactions.map(reaction =>
+            reactionTypes.map(reaction =>
               reactionCount(
                 'memory_reactions',
                 'memory_id',
@@ -306,45 +356,64 @@
           );
 
         cards.push(`
-          <article class="memory-card">
+          <article
+            class="memory-card"
+            data-memory-id="${esc(memory.id)}"
+            tabindex="0"
+            role="button"
+            aria-label="Open memory">
 
-            <img
-              src="${esc(memory.image_url)}"
-              alt="BPharm One class memory"
-              loading="lazy">
+            <div class="memory-image-wrap">
+              <img
+                src="${esc(memory.image_url)}"
+                alt="${esc(
+                  memory.caption ||
+                  'BPharm One class memory'
+                )}"
+                loading="lazy">
+            </div>
 
-            <h3>
-              ${esc(
-                memory.caption ||
-                'A BPharm One memory'
-              )}
-            </h3>
+            <div class="memory-content">
 
-            <small>
-              ${
-                memory.anonymous
-                  ? 'Anonymous'
-                  : esc(
-                      memory.name ||
-                      'BPharm One'
-                    )
-              }
-              · ${timeAgo(memory.created_at)}
-            </small>
+              <h3>
+                ${esc(
+                  memory.caption ||
+                  'A BPharm One memory'
+                )}
+              </h3>
 
-            <div class="reactions">
+              <small>
+                ${
+                  memory.anonymous
+                    ? 'Anonymous'
+                    : esc(
+                        memory.name ||
+                        'BPharm One'
+                      )
+                }
+                ·
+                ${timeAgo(memory.created_at)}
+              </small>
 
-              ${reactions.map(
-                (reaction, index) => `
-                  <button
-                    type="button"
-                    data-react-memory="${esc(memory.id)}"
-                    data-reaction="${reaction}">
-                    ${reaction}
-                    <i>${counts[index]}</i>
-                  </button>
-                `
-              ).join('')}
+              <div
+                class="reactions memory-reactions">
+
+                ${reactionTypes.map(
+                  (reaction, index) => `
+                    <button
+                      type="button"
+                      data-react-memory="${esc(memory.id)}"
+                      data-reaction="${reaction}"
+                      aria-label="React ${reaction}">
+
+                      ${reaction}
+                      <i>${counts[index]}</i>
+
+                    </button>
+                  `
+                ).join('')}
+
+              </div>
 
             </div>
 
@@ -356,7 +425,6 @@
         cards.join('');
 
     } catch (error) {
-
       console.error(
         'Loading memories:',
         error
@@ -374,7 +442,6 @@
   }
 
   function setupMemories() {
-
     const add =
       $('#addMemory');
 
@@ -382,35 +449,39 @@
       $('#memoryInput');
 
     if (add && input) {
-
       add.addEventListener(
         'click',
         event => {
-
           event.preventDefault();
-
+          pulse(add);
           input.click();
         }
       );
     }
 
     if (input) {
-
       input.addEventListener(
         'change',
         async event => {
-
           const file =
             event.target.files?.[0];
 
           if (!file) return;
 
           if (!sb) {
-
             toast(
               'The shared memory service is unavailable.'
             );
+            return;
+          }
 
+          if (
+            !file.type.startsWith('image/')
+          ) {
+            event.target.value = '';
+            toast(
+              'Please choose an image.'
+            );
             return;
           }
 
@@ -418,13 +489,10 @@
             file.size >
             5 * 1024 * 1024
           ) {
-
             event.target.value = '';
-
             toast(
               'Please choose a photo under 5 MB.'
             );
-
             return;
           }
 
@@ -437,9 +505,7 @@
             );
 
           if (!caption) {
-
             event.target.value = '';
-
             return;
           }
 
@@ -455,7 +521,6 @@
             !name;
 
           try {
-
             const safe =
               file.name.replace(
                 /[^a-zA-Z0-9._-]/g,
@@ -473,6 +538,10 @@
 
             const path =
               `${randomId}-${safe}`;
+
+            toast(
+              'Uploading your memory...'
+            );
 
             const {
               error: uploadError
@@ -525,23 +594,21 @@
             await loadMemories();
 
           } catch (error) {
+            console.error(
+              'Memory upload:',
+              error
+            );
 
-  console.error(
-    'Memory upload:',
-    error
-  );
+            event.target.value = '';
 
-  event.target.value = '';
-
-  toast(
-    'UPLOAD ERROR: ' +
-    (
-      error?.message ||
-      error?.error_description ||
-      JSON.stringify(error)
-    )
-  );
-}
+            toast(
+              'Upload failed: ' +
+              (
+                error?.message ||
+                'Please try again.'
+              )
+            );
+          }
         }
       );
     }
@@ -555,146 +622,270 @@
       'click',
       async event => {
 
-        const button =
+        /* ---------------------------------------------
+           REACTION CLICK
+        --------------------------------------------- */
+
+        const reactionButton =
           event.target.closest(
             '[data-react-memory]'
           );
 
-        if (!button || !sb) {
+        if (reactionButton) {
+          event.stopPropagation();
+
+          if (!sb) return;
+
+          const id =
+            reactionButton.dataset
+              .reactMemory;
+
+          const reaction =
+            reactionButton.dataset
+              .reaction;
+
+          const key =
+            `memory:${id}:${reaction}`;
+
+          if (
+            localStorage.getItem(key)
+          ) {
+            toast(
+              'You already gave this reaction.'
+            );
+            return;
+          }
+
+          try {
+            const {
+              error
+            } = await sb
+              .from('memory_reactions')
+              .insert({
+                memory_id: id,
+                reaction
+              });
+
+            if (error) {
+              throw error;
+            }
+
+            localStorage.setItem(
+              key,
+              '1'
+            );
+
+            const counter =
+              reactionButton.querySelector('i');
+
+            if (counter) {
+              counter.textContent =
+                Number(
+                  counter.textContent
+                ) + 1;
+            }
+
+            pulse(reactionButton);
+
+          } catch (error) {
+            console.error(
+              'Memory reaction:',
+              error
+            );
+
+            toast(
+              'Reaction could not be saved.'
+            );
+          }
+
           return;
         }
 
-        const id =
-          button.dataset.reactMemory;
+        /* ---------------------------------------------
+           PHOTO CLICK
+        --------------------------------------------- */
 
-        const reaction =
-          button.dataset.reaction;
+        const card =
+          event.target.closest(
+            '.memory-card'
+          );
 
-        const key =
-          `memory:${id}:${reaction}`;
+        if (!card) return;
+
+        const image =
+          card.querySelector('img');
+
+        if (!image?.src) return;
+
+        openMemoryViewer(
+          image.src,
+          card.querySelector('h3')
+            ?.textContent || ''
+        );
+      }
+    );
+
+    gallery.addEventListener(
+      'keydown',
+      event => {
+        const card =
+          event.target.closest(
+            '.memory-card'
+          );
+
+        if (!card) return;
 
         if (
-          localStorage.getItem(key)
+          event.key !== 'Enter' &&
+          event.key !== ' '
         ) {
-
-          toast(
-            'You already gave this reaction.'
-          );
-
           return;
         }
 
-        try {
+        event.preventDefault();
 
-          const {
-            error
-          } = await sb
-            .from('memory_reactions')
-            .insert({
-              memory_id: id,
-              reaction
-            });
+        const image =
+          card.querySelector('img');
 
-          if (error) {
-            throw error;
-          }
+        if (!image?.src) return;
 
-          localStorage.setItem(
-            key,
-            '1'
-          );
+        openMemoryViewer(
+          image.src,
+          card.querySelector('h3')
+            ?.textContent || ''
+        );
+      }
+    );
+  }
 
-          const counter =
-            button.querySelector('i');
+  /* =====================================================
+     MEMORY VIEWER
+  ====================================================== */
 
-          if (counter) {
+  function openMemoryViewer(
+    src,
+    text = ''
+  ) {
+    const viewer =
+      $('#memoryViewer');
 
-            counter.textContent =
-              Number(
-                counter.textContent
-              ) + 1;
-          }
+    const image =
+      $('#memoryViewerImage');
 
-          button.classList.add('pop');
+    const caption =
+      $('#memoryViewerCaption');
 
-        } catch (error) {
+    if (!viewer || !image) {
+      return;
+    }
 
-          console.error(
-            'Memory reaction:',
-            error
-          );
+    image.src = src;
 
-          toast(
-            'Reaction could not be saved.'
-          );
+    if (caption) {
+      caption.textContent =
+        text || '';
+    }
+
+    viewer.classList.remove(
+      'hidden'
+    );
+
+    viewer.setAttribute(
+      'aria-hidden',
+      'false'
+    );
+
+    document.body.style.overflow =
+      'hidden';
+  }
+
+  function closeMemoryViewer() {
+    const viewer =
+      $('#memoryViewer');
+
+    const image =
+      $('#memoryViewerImage');
+
+    const caption =
+      $('#memoryViewerCaption');
+
+    if (!viewer) return;
+
+    viewer.classList.add(
+      'hidden'
+    );
+
+    viewer.setAttribute(
+      'aria-hidden',
+      'true'
+    );
+
+    if (image) {
+      image.src = '';
+    }
+
+    if (caption) {
+      caption.textContent = '';
+    }
+
+    document.body.style.overflow =
+      '';
+  }
+
+  function setupMemoryViewer() {
+    const viewer =
+      $('#memoryViewer');
+
+    const close =
+      $('#memoryViewerClose');
+
+    if (!viewer) return;
+
+    if (close) {
+      close.addEventListener(
+        'click',
+        event => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeMemoryViewer();
+        }
+      );
+    }
+
+    viewer.addEventListener(
+      'click',
+      event => {
+        if (
+          event.target === viewer
+        ) {
+          closeMemoryViewer();
+        }
+      }
+    );
+
+    document.addEventListener(
+      'keydown',
+      event => {
+        if (
+          event.key === 'Escape' &&
+          !viewer.classList.contains(
+            'hidden'
+          )
+        ) {
+          closeMemoryViewer();
         }
       }
     );
   }
-function setupMemoryViewer() {console.log('MEMORY VIEWER STARTED');
-  const viewer = $('#memoryViewer');
-  const image = $('#memoryViewerImage');
-  const caption = $('#memoryViewerCaption');
-  const close = $('#memoryViewerClose');
 
-  if (!viewer || !image || !close) return;
-
-  function openViewer(src, text) {
-    image.src = src;
-    caption.textContent = text || '';
-    viewer.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeViewer() {
-    viewer.classList.add('hidden');
-    image.src = '';
-    caption.textContent = '';
-    document.body.style.overflow = 'hidden';
-  }
-
-  close.addEventListener('click', closeViewer);
-
-  viewer.addEventListener('click', event => {
-    if (event.target === viewer) {
-      closeViewer();
-    }
-  });
-
-  document.addEventListener('keydown', event => {
-    if (
-      event.key === 'Escape' &&
-      !viewer.classList.contains('hidden')
-    ) {
-      closeViewer();
-    }
-  });
-document.addEventListener('pointerup', event => {
-  const card = event.target.closest('.memory-card');
-
-  if (!card) return;
-
-  const img = card.querySelector('img');
-
-  if (!img || !img.src) return;
-
-  const title =
-    card.querySelector('h3')?.textContent || '';
-
-  openViewer(img.src, title);
-});
-  
-            }
   /* =====================================================
-     SHOW LOVE💕 
+     SHOW LOVE
   ====================================================== */
 
   async function loadHeartCount() {
-
     if (!sb) return;
 
     try {
-
       const {
         count,
         error
@@ -709,7 +900,6 @@ document.addEventListener('pointerup', event => {
         !error &&
         $('#heartCount')
       ) {
-
         $('#heartCount').textContent =
           `❤️ ${count || 0} hearts shared`;
       }
@@ -717,7 +907,6 @@ document.addEventListener('pointerup', event => {
       await loadShowLove();
 
     } catch (error) {
-
       console.error(
         'Heart count:',
         error
@@ -726,16 +915,12 @@ document.addEventListener('pointerup', event => {
   }
 
   async function loadShowLove() {
-
     const feed =
       $('#loveFeed');
 
-    if (!feed || !sb) {
-      return;
-    }
+    if (!feed || !sb) return;
 
     try {
-
       const {
         data,
         error
@@ -753,28 +938,21 @@ document.addEventListener('pointerup', event => {
         throw error;
       }
 
-      if (
-        !data ||
-        !data.length
-      ) {
-
+      if (!data?.length) {
         feed.innerHTML = `
           <div class="love-empty">
             No hearts shared yet.<br>
             Be the first if you want.
           </div>
         `;
-
         return;
       }
 
       feed.innerHTML =
         data.map(heart => `
-
           <div class="love-card">
 
             <div class="love-line">
-
               <span>❤️</span>
 
               <strong>
@@ -794,7 +972,6 @@ document.addEventListener('pointerup', event => {
                   'BPharm One'
                 )}
               </strong>
-
             </div>
 
             <small>
@@ -804,11 +981,9 @@ document.addEventListener('pointerup', event => {
             </small>
 
           </div>
-
         `).join('');
 
     } catch (error) {
-
       console.error(
         'Show Love:',
         error
@@ -823,7 +998,6 @@ document.addEventListener('pointerup', event => {
   }
 
   function setupHearts() {
-
     const button =
       $('#heartBtn');
 
@@ -832,15 +1006,12 @@ document.addEventListener('pointerup', event => {
     button.addEventListener(
       'click',
       async event => {
-
         event.preventDefault();
 
         if (!sb) {
-
-          toast(
+        toast(
             'The shared love service is unavailable.'
           );
-
           return;
         }
 
@@ -851,11 +1022,9 @@ document.addEventListener('pointerup', event => {
           );
 
         if (!receiver) {
-
           toast(
             "Write the person's name first."
           );
-
           return;
         }
 
@@ -867,6 +1036,11 @@ document.addEventListener('pointerup', event => {
           'Anonymous';
 
         try {
+          setBusy(
+            button,
+            true,
+            'SENDING...'
+          );
 
           const {
             error
@@ -889,7 +1063,7 @@ document.addEventListener('pointerup', event => {
             $('#heartSender').value = '';
           }
 
-          button.classList.add('pop');
+          pulse(button);
 
           await loadHeartCount();
 
@@ -898,7 +1072,6 @@ document.addEventListener('pointerup', event => {
           );
 
         } catch (error) {
-
           console.error(
             'Send heart:',
             error
@@ -906,6 +1079,12 @@ document.addEventListener('pointerup', event => {
 
           toast(
             'Could not send the heart.'
+          );
+
+        } finally {
+          setBusy(
+            button,
+            false
           );
         }
       }
@@ -916,117 +1095,248 @@ document.addEventListener('pointerup', event => {
      CLASS WALL
   ====================================================== */
 
-  async function messageHTML(message) {
+  const WALL_REACTIONS =
+    ['❤️', '😂', '💊'];
 
-    const reactions =
-      ['❤️', '😂', '💊'];
-
-    const counts =
-      await Promise.all(
-        reactions.map(reaction =>
+  async function getMessageReactionCounts(
+    messageId
+  ) {
+    return Promise.all(
+      WALL_REACTIONS.map(
+        reaction =>
           reactionCount(
             'message_reactions',
             'message_id',
-            message.id,
+            messageId,
             reaction
           )
-        )
+      )
+    );
+  }
+
+  async function messageHTML(
+    message
+  ) {
+    const counts =
+      await getMessageReactionCounts(
+        message.id
       );
 
     return `
-
-      <div
-        class="feeditem"
+      <article
+        class="feeditem wall-message"
         data-id="${esc(message.id)}">
 
-        <p>
-          “${esc(message.message)}”
-        </p>
+        <div class="wall-message-body">
 
-        <small>
-          ${
-            message.anonymous
-              ? 'Anonymous'
-              : esc(
-                  message.name ||
-                  'BPharm One'
-                )
-          }
-          · ${timeAgo(
-            message.created_at
-          )}
-        </small>
+          <p class="wall-message-text">
+            “${esc(message.message)}”
+          </p>
 
-        <div class="feedactions">
+          <small class="wall-message-meta">
+            ${
+              message.anonymous
+                ? 'Anonymous'
+                : esc(
+                    message.name ||
+                    'BPharm One'
+                  )
+            }
+            ·
+            ${timeAgo(
+              message.created_at
+            )}
+          </small>
 
-          ${reactions.map(
+        </div>
+
+        <div class="feedactions wall-actions">
+
+          ${WALL_REACTIONS.map(
             (reaction, index) => `
-
               <button
                 type="button"
+                class="wall-reaction"
                 data-react-message="${esc(message.id)}"
                 data-reaction="${reaction}">
 
-                ${reaction}
+                <span>${reaction}</span>
                 <i>${counts[index]}</i>
 
               </button>
-
             `
           ).join('')}
 
           <button
             type="button"
-            data-reply="${esc(message.id)}">
+            class="reply-toggle"
+            data-reply="${esc(message.id)}"
+            aria-expanded="false">
 
-            💬 Reply
+            <span class="reply-icon">
+              💬
+            </span>
+
+            <strong>
+              REPLY
+            </strong>
+
+            <span
+              class="reply-count"
+              data-reply-count="${esc(message.id)}">
+              0
+            </span>
 
           </button>
 
         </div>
 
-        <div
+        <section
           class="replybox hidden"
-          id="reply-${esc(message.id)}">
+          id="reply-${esc(message.id)}"
+          aria-label="Replies">
 
-          <input
-            type="text"
-            placeholder="Your name">
+          <div class="replybox-header">
 
-          <textarea
-            placeholder="Write a reply..."></textarea>
+            <div>
+              <strong>
+                💬 Replies
+              </strong>
 
-          <button
-            type="button"
-            class="secondary"
-            data-send-reply="${esc(message.id)}">
+              <small>
+                Join the conversation
+              </small>
+            </div>
 
-            SEND REPLY
+            <button
+              type="button"
+              class="reply-close"
+              data-close-reply="${esc(message.id)}"
+              aria-label="Close replies">
+              ×
+            </button>
 
-          </button>
+          </div>
 
           <div
             class="replies"
             id="replies-${esc(message.id)}">
+
+            <div class="replies-loading">
+              Loading replies...
+            </div>
+
           </div>
 
-        </div>
+          <div class="reply-composer">
 
-      </div>
+            <input
+              type="text"
+              maxlength="80"
+              placeholder="Your name (optional)"
+              aria-label="Your name">
+
+            <textarea
+              maxlength="500"
+              rows="3"
+              placeholder="Write your reply..."
+              aria-label="Write your reply"></textarea>
+
+            <div class="reply-compose-footer">
+
+              <small>
+                Leave your name blank to reply anonymously.
+              </small>
+
+              <button
+                type="button"
+                class="secondary reply-send"
+                data-send-reply="${esc(message.id)}">
+
+                SEND REPLY →
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </section>
+
+      </article>
     `;
   }
 
-  async function loadMessages() {
+  async function getReplyCount(
+    messageId
+  ) {
+    if (!sb) return 0;
 
+    try {
+      const {
+        count,
+        error
+      } = await sb
+        .from('replies')
+        .select('*', {
+          count: 'exact',
+          head: true
+        })
+        .eq(
+          'message_id',
+          messageId
+        );
+
+      if (error) {
+        console.error(
+          'Reply count:',
+          error
+        );
+        return 0;
+      }
+
+      return count || 0;
+
+    } catch (error) {
+      console.error(
+        'Reply count:',
+        error
+      );
+
+      return 0;
+    }
+  }
+
+  async function updateReplyCount(
+    messageId
+  ) {
+    const count =
+      await getReplyCount(
+        messageId
+      );
+
+    const countElement =
+      document.querySelector(
+        `[data-reply-count="${CSS.escape(
+          String(messageId)
+        )}"]`
+      );
+
+    if (countElement) {
+      countElement.textContent =
+        count;
+    }
+
+    return count;
+  }
+
+  async function loadMessages() {
     const feed =
       $('#wallFeed');
 
-    if (!feed || !sb) {
-      return;
-    }
+    if (!feed || !sb) return;
 
     try {
-
       const {
         data,
         error
@@ -1042,11 +1352,7 @@ document.addEventListener('pointerup', event => {
         throw error;
       }
 
-      if (
-        !data ||
-        !data.length
-      ) {
-
+      if (!data?.length) {
         feed.innerHTML = `
           <div class="empty-state">
             <span>💬</span>
@@ -1055,7 +1361,6 @@ document.addEventListener('pointerup', event => {
             </p>
           </div>
         `;
-
         return;
       }
 
@@ -1067,8 +1372,16 @@ document.addEventListener('pointerup', event => {
       feed.innerHTML =
         html.join('');
 
-    } catch (error) {
+      /* Load reply counts after rendering. */
+      await Promise.all(
+        data.map(message =>
+          updateReplyCount(
+            message.id
+          )
+        )
+      );
 
+    } catch (error) {
       console.error(
         'Class Wall:',
         error
@@ -1083,19 +1396,27 @@ document.addEventListener('pointerup', event => {
         </div>
       `;
     }
-  }
+        }/* =====================================================
+     REPLIES
+  ====================================================== */
 
-  async function loadReplies(messageId) {
-
+  async function loadReplies(
+    messageId
+  ) {
     const box =
-      $(`#replies-${messageId}`);
+      document.getElementById(
+        `replies-${messageId}`
+      );
 
-    if (!box || !sb) {
-      return;
-    }
+    if (!box || !sb) return;
+
+    box.innerHTML = `
+      <div class="replies-loading">
+        Loading replies...
+      </div>
+    `;
 
     try {
-
       const {
         data,
         error
@@ -1108,190 +1429,282 @@ document.addEventListener('pointerup', event => {
         )
         .order('created_at', {
           ascending: true
-        });
+        })
+        .limit(100);
 
       if (error) {
         throw error;
       }
 
-      box.innerHTML =
-        (data || [])
-          .map(reply => `
+      if (!data?.length) {
+        box.innerHTML = `
+          <div class="replies-empty">
+            <span>💬</span>
+            <strong>
+              No replies yet.
+            </strong>
+            <small>
+              Be the first person to say something.
+            </small>
+          </div>
+        `;
+      } else {
+        box.innerHTML =
+          data.map(reply => `
+            <div
+              class="reply-item"
+              data-reply-id="${esc(reply.id)}">
 
-            <div class="replyitem">
-
-              <strong>
+              <div class="reply-avatar">
                 ${
                   reply.anonymous
-                    ? 'Anonymous'
+                    ? 'A'
                     : esc(
-                        reply.name ||
-                        'BPharm One'
+                        (
+                          reply.name ||
+                          'B'
+                        )
+                        .charAt(0)
+                        .toUpperCase()
                       )
                 }
-              </strong>
+              </div>
 
-              <p>
-                ${esc(reply.reply)}
-              </p>
+              <div class="reply-content">
+
+                <div class="reply-top">
+
+                  <strong>
+                    ${
+                      reply.anonymous
+                        ? 'Anonymous'
+                        : esc(
+                            reply.name ||
+                            'BPharm One'
+                          )
+                    }
+                  </strong>
+
+                  <small>
+                    ${timeAgo(
+                      reply.created_at
+                    )}
+                  </small>
+
+                </div>
+
+                <p>
+                  ${esc(
+                    reply.reply ||
+                    ''
+                  )}
+                </p>
+
+              </div>
 
             </div>
+          `).join('');
+      }
 
-          `)
-          .join('');
+      await updateReplyCount(
+        messageId
+      );
 
     } catch (error) {
-
       console.error(
-        'Replies:',
+        'Loading replies:',
         error
+      );
+
+      box.innerHTML = `
+        <div class="replies-error">
+          Replies could not be loaded.
+          Please try again.
+        </div>
+      `;
+    }
+  }
+
+  function openReplyBox(
+    messageId
+  ) {
+    const box =
+      document.getElementById(
+        `reply-${messageId}`
+      );
+
+    const toggle =
+      document.querySelector(
+        `[data-reply="${CSS.escape(
+          String(messageId)
+        )}"]`
+      );
+
+    if (!box) return;
+
+    box.classList.remove(
+      'hidden'
+    );
+
+    if (toggle) {
+      toggle.setAttribute(
+        'aria-expanded',
+        'true'
+      );
+
+      toggle.classList.add(
+        'active'
+      );
+    }
+
+    loadReplies(messageId);
+
+    const textarea =
+      box.querySelector('textarea');
+
+    if (textarea) {
+      setTimeout(() => {
+        textarea.focus({
+          preventScroll: true
+        });
+      }, 100);
+    }
+  }
+
+  function closeReplyBox(
+    messageId
+  ) {
+    const box =
+      document.getElementById(
+        `reply-${messageId}`
+      );
+
+    const toggle =
+      document.querySelector(
+        `[data-reply="${CSS.escape(
+          String(messageId)
+        )}"]`
+      );
+
+    if (!box) return;
+
+    box.classList.add(
+      'hidden'
+    );
+
+    if (toggle) {
+      toggle.setAttribute(
+        'aria-expanded',
+        'false'
+      );
+
+      toggle.classList.remove(
+        'active'
       );
     }
   }
 
   function setupMessages() {
-
-    const post =
-      $('#postMessage');
-
-    if (post) {
-
-      post.addEventListener(
-        'click',
-        async event => {
-
-          event.preventDefault();
-
-          if (!sb) {
-
-            toast(
-              'The Class Wall is unavailable.'
-            );
-
-            return;
-      }
-  const message =
-            clean(
-              $('#message')?.value,
-              800
-            );
-
-          if (!message) {
-
-            toast(
-              'Write something first.'
-            );
-
-            return;
-          }
-
-          const name =
-            clean(
-              $('#name')?.value,
-              80
-            ) ||
-            'Anonymous';
-
-          const anonymous =
-            $('#anonymousMessage')
-              ?.checked ??
-            false;
-
-          try {
-
-            const {
-              error
-            } = await sb
-              .from('messages')
-              .insert({
-                message,
-                name,
-                anonymous
-              });
-
-            if (error) {
-              throw error;
-            }
-
-            if ($('#message')) {
-              $('#message').value = '';
-            }
-
-            if ($('#name')) {
-              $('#name').value = '';
-            }
-
-            if ($('#anonymousMessage')) {
-              $('#anonymousMessage').checked =
-                false;
-            }
-
-            toast(
-              'Posted to the class wall.'
-            );
-
-            await loadMessages();
-
-          } catch (error) {
-
-            console.error(
-              'Post message:',
-              error
-            );
-
-            toast(
-              'Could not post the message.'
-            );
-          }
-        }
-      );
-    }
-
     const feed =
       $('#wallFeed');
 
     if (!feed) return;
 
+    /* ---------------------------------------------
+       Existing / future messages
+    --------------------------------------------- */
+
     feed.addEventListener(
       'click',
       async event => {
 
-        const reaction =
+        /* Reply toggle */
+        const replyButton =
+          event.target.closest(
+            '[data-reply]'
+          );
+
+        if (replyButton) {
+          event.preventDefault();
+
+          const id =
+            replyButton.dataset.reply;
+
+          const box =
+            document.getElementById(
+              `reply-${id}`
+            );
+
+          if (
+            box?.classList.contains(
+              'hidden'
+            )
+          ) {
+            openReplyBox(id);
+          } else {
+            closeReplyBox(id);
+          }
+
+          pulse(replyButton);
+
+          return;
+        }
+
+        /* Close reply area */
+        const closeButton =
+          event.target.closest(
+            '[data-close-reply]'
+          );
+
+        if (closeButton) {
+          closeReplyBox(
+            closeButton.dataset
+              .closeReply
+          );
+          return;
+        }
+
+        /* Message reaction */
+        const reactionButton =
           event.target.closest(
             '[data-react-message]'
           );
 
-        if (reaction) {
+        if (reactionButton) {
+          event.stopPropagation();
+
+          if (!sb) return;
 
           const id =
-            reaction.dataset.reactMessage;
+            reactionButton.dataset
+              .reactMessage;
 
-          const emoji =
-            reaction.dataset.reaction;
+          const reaction =
+            reactionButton.dataset
+              .reaction;
 
           const key =
-            `message:${id}:${emoji}`;
+            `message:${id}:${reaction}`;
 
           if (
             localStorage.getItem(key)
           ) {
-
             toast(
               'You already gave this reaction.'
             );
-
             return;
           }
 
           try {
-
             const {
               error
             } = await sb
-              .from('message_reactions')
+              .from(
+                'message_reactions'
+              )
               .insert({
                 message_id: id,
-                reaction: emoji
+                reaction
               });
 
             if (error) {
@@ -1304,20 +1717,22 @@ document.addEventListener('pointerup', event => {
             );
 
             const counter =
-              reaction.querySelector('i');
+              reactionButton.querySelector(
+                'i'
+              );
 
             if (counter) {
-
               counter.textContent =
                 Number(
                   counter.textContent
                 ) + 1;
             }
 
-            reaction.classList.add('pop');
+            pulse(
+              reactionButton
+            );
 
           } catch (error) {
-
             console.error(
               'Message reaction:',
               error
@@ -1331,81 +1746,67 @@ document.addEventListener('pointerup', event => {
           return;
         }
 
-        const replyButton =
-          event.target.closest(
-            '[data-reply]'
-          );
-
-        if (replyButton) {
-
-          const id =
-            replyButton.dataset.reply;
-
-          const box =
-            $(`#reply-${id}`);
-
-          if (box) {
-
-            box.classList.toggle(
-              'hidden'
-            );
-
-            if (
-              !box.classList.contains(
-                'hidden'
-              )
-            ) {
-
-              loadReplies(id);
-            }
-          }
-
-          return;
-        }
-
+        /* Send reply */
         const sendButton =
           event.target.closest(
             '[data-send-reply]'
           );
 
         if (sendButton) {
+          event.preventDefault();
 
           const id =
-            sendButton.dataset.sendReply;
+            sendButton.dataset
+              .sendReply;
 
           const box =
-            $(`#reply-${id}`);
+            document.getElementById(
+              `reply-${id}`
+            );
 
           if (!box || !sb) {
             return;
           }
 
-          const inputs =
-            box.querySelectorAll(
-              'input, textarea'
+          const nameInput =
+            box.querySelector(
+              'input'
+            );
+
+          const textInput =
+            box.querySelector(
+              'textarea'
             );
 
           const name =
             clean(
-              inputs[0]?.value,
+              nameInput?.value,
               80
             ) ||
             'Anonymous';
 
           const replyText =
             clean(
-              inputs[1]?.value,
+              textInput?.value,
               500
             );
 
           if (!replyText) {
-
             toast(
               'Write a reply first.'
-            );return;
+            );
+
+            textInput?.focus();
+
+            return;
           }
 
           try {
+            setBusy(
+              sendButton,
+              true,
+              'POSTING...'
+            );
 
             const {
               error
@@ -1416,25 +1817,30 @@ document.addEventListener('pointerup', event => {
                 name,
                 reply: replyText,
                 anonymous:
-                  name === 'Anonymous'
+                  name ===
+                  'Anonymous'
               });
 
             if (error) {
               throw error;
             }
 
-            if (inputs[1]) {
-              inputs[1].value = '';
+            if (textInput) {
+              textInput.value = '';
             }
+
+            pulse(
+              sendButton
+            );
 
             toast(
               'Reply posted.'
             );
 
-            await loadReplies(id);
+            await loadReplies(id);/* Keep the reply section open. */
+            openReplyBox(id);
 
           } catch (error) {
-
             console.error(
               'Reply:',
               error
@@ -1443,7 +1849,49 @@ document.addEventListener('pointerup', event => {
             toast(
               'Reply could not be saved.'
             );
+
+          } finally {
+            setBusy(
+              sendButton,
+              false
+            );
           }
+
+          return;
+        }
+      }
+    );
+
+    /* Enter in reply textarea:
+       Ctrl/Cmd + Enter = send */
+    feed.addEventListener(
+      'keydown',
+      event => {
+        if (
+          event.target.tagName !==
+          'TEXTAREA'
+        ) {
+          return;
+        }
+
+        if (
+          event.key === 'Enter' &&
+          (event.ctrlKey ||
+            event.metaKey)
+        ) {
+          event.preventDefault();
+
+          const box =
+            event.target.closest(
+              '.replybox'
+            );
+
+          const button =
+            box?.querySelector(
+              '[data-send-reply]'
+            );
+
+          button?.click();
         }
       }
     );
@@ -1453,507 +1901,362 @@ document.addEventListener('pointerup', event => {
      CR APPRECIATION
   ====================================================== */
 
-  const crContent = {
-
-    adina: {
-      title: '🥰❤️ Madam Adina',
-      text: `
-        Madam Adina, thank you for stepping forward
-        to represent our class.
-
-        Your role was not simply about carrying a title.
-        You helped communicate our concerns, represent
-        our ideas and stand with the class when decisions
-        had to be made.
-
-        Thank you for listening, for representing us,
-        and for being part of the effort that kept
-        BPharm One moving together.
-
-        We appreciate you.
-      `
-    },
-
-    julius: {
-      title: '(pharma tips💊) Julius',
-      text: `
-        Julius, thank you for taking the responsibility
-        of representing BPharm One.
-
-        You stepped into the position and helped give
-        the class a voice. You represented our interests,
-        helped communicate important matters and worked
-        toward choices that could benefit the class.
-
-        The role required patience, communication and
-        responsibility, and we appreciate the effort
-        you put into it.
-
-        Thank you for representing us.
-      `
-    },
-
-    paschal: {
-      title: '✨ Paschal',
-      text: `
-        Paschal, we also want to recognize the work you
-        did while representing BPharm One.
-
-        You did a great job carrying the responsibility,
-        standing for the class and helping bring people
-        together.
-
-        Although your time in the position came to an end
-        because of circumstances outside your ability to
-        control, the contribution you made remains part
-        of our first-year story.
-
-        Thank you for serving, representing us and helping
-        build the class we became.
-      `
-    }
-
-  };
-
   function setupCR() {
+    const cards =
+      $$('.cr-card');
 
-    const modal =
-      $('#crModal');
-
-    const content =
-      $('#crModalContent');
-
-    const close =
-      $('#closeCr');
-
-    if (!modal || !content) {
-      return;
-    }
-
-    $$('.cr-card')
-      .forEach(card => {
-
-        card.addEventListener(
-          'click',
-          () => {
-
-            const person =
-              card.dataset.cr;
-
-            const data =
-              crContent[person];
-
-            if (!data) return;
-
-            content.innerHTML = `
-              <h3>
-                ${esc(data.title)}
-              </h3>
-
-              ${data.text
-                .trim()
-                .split(/\n\s*\n/)
-                .map(paragraph =>
-                  `<p>${esc(
-                    paragraph.trim()
-                  )}</p>`
-                )
-                .join('')}
-            `;
-
-            modal.classList.remove(
-              'hidden'
-            );
-          }
-        );
-      });
-
-    close?.addEventListener(
-      'click',
-      () => {
-        modal.classList.add(
-          'hidden'
-        );
-      }
-    );
-
-    modal.addEventListener(
-      'click',
-      event => {
-
-        if (
-          event.target === modal
-        ) {
-
-          modal.classList.add(
-            'hidden'
+    cards.forEach(card => {
+      card.addEventListener(
+        'click',
+        () => {
+          card.classList.toggle(
+            'expanded'
           );
         }
-      }
-    );
+      );
+    });
   }
 
   /* =====================================================
      CARD STUDIO
-  ====================================================== */let selectedTemplate =
-    'APPRECIATION';
-
-  function setupCards() {
-
-    $$('.templates button')
-      .forEach(button => {
-
-        button.addEventListener(
-          'click',
-          event => {
-
-            event.preventDefault();
-
-            selectedTemplate =
-              button
-                .querySelector('small')
-                ?.textContent
-                ?.trim() ||
-              'APPRECIATION';
-
-            $$('.templates button')
-              .forEach(other =>
-                other.classList.remove(
-                  'selected'
-                )
-              );
-
-            button.classList.add(
-              'selected'
-            );
-
-            if ($('#previewTemplate')) {
-
-              $('#previewTemplate')
-                .textContent =
-                selectedTemplate;
-            }
-          }
-        );
-      });
-
-    $('#cardText')
-      ?.addEventListener(
-        'input',
-        event => {
-
-          if ($('#previewText')) {
-
-            $('#previewText')
-              .textContent =
-              event.target.value ||
-              'Your message will appear here.';
-          }
-        }
-      );
-
-    $('#cardFrom')
-      ?.addEventListener(
-        'input',
-        event => {
-
-          if ($('#previewFrom')) {
-
-            $('#previewFrom')
-              .textContent =
-              event.target.value
-                ? `— ${event.target.value}`
-                : '';
-          }
-        }
-      );
-
-    $('#downloadCard')
-      ?.addEventListener(
-        'click',
-        event => {
-
-          event.preventDefault();
-
-          const canvas =
-            document.createElement(
-              'canvas'
-            );
-
-          canvas.width = 1080;
-          canvas.height = 1350;
-
-          const ctx =
-            canvas.getContext('2d');
-
-          if (!ctx) {
-            toast(
-              'Card creation failed.'
-            );
-            return;
-          }
-
-          const gradient =
-            ctx.createLinearGradient(
-              0,
-              0,
-              1080,
-              1350
-            );
-
-          gradient.addColorStop(
-            0,
-            '#120b20'
-          );
-
-          gradient.addColorStop(
-            1,
-            '#35134b'
-          );
-
-          ctx.fillStyle =
-            gradient;
-
-          ctx.fillRect(
-            0,
-            0,
-            1080,
-            1350
-          );
-
-          ctx.fillStyle =
-            '#ffffff';
-
-          ctx.textAlign =
-            'center';
-
-          ctx.font =
-            'bold 42px Arial';
-
-          ctx.fillText(
-            'BPHARM ONE · CLASS OF 2029',
-            540,
-            170
-          );
-
-          ctx.font =
-            'bold 68px Arial';
-
-          ctx.fillText(
-            selectedTemplate,
-            540,
-            300
-          );
-
-          const message =
-            (
-              $('#cardText')?.value ||
-              'Your message will appear here.'
-            ).slice(0, 240);
-
-          wrapText(
-            ctx,
-            message,
-            540,
-            520,
-            820,
-            58
-          );
-
-          ctx.font =
-            '38px Arial';
-
-          ctx.fillText(
-            $('#cardFrom')?.value
-              ? `— ${$('#cardFrom').value}`
-              : '',
-            540,
-            1050
-          );
-
-          ctx.font =
-            '30px Arial';
-
-          ctx.fillText(
-            'OUR FIRST CHAPTER',
-            540,
-            1210
-          );
-
-          const link =
-            document.createElement(
-              'a'
-            );
-
-          link.download =
-            'bpharm-one-card.png';
-
-          link.href =
-            canvas.toDataURL(
-              'image/png'
-            );
-
-          link.click();
-
-          toast(
-            'Card downloaded.'
-          );
-        }
-      );
-
-    $('#postCard')
-      ?.addEventListener(
-        'click',
-        async event => {
-
-          event.preventDefault();
-
-          if (!sb) {
-
-            toast(
-              'Card sharing is unavailable.'
-            );
-
-            return;
-          }
-
-          const message =
-            clean(
-              $('#cardText')?.value,
-              800
-            );
-
-          if (!message) {
-
-            toast(
-              'Write your card message first.'
-            );
-
-            return;
-          }
-
-          const name =
-            clean(
-              $('#cardFrom')?.value,
-              80
-            ) ||
-            'BPharm One';
-
-          try {
-
-            const {
-              error
-            } = await sb
-              .from('cards')
-              .insert({
-                name,
-                recipient:
-                  'BPharm One',
-                message,
-                template:
-                  selectedTemplate
-              });
-
-            if (error) {
-              throw error;
-            }
-
-            toast(
-              'Card posted.'
-            );
-
-            go('wall');
-
-          } catch (error) {
-
-            console.error(
-              'Post card:',
-              error
-            );
-
-            toast(
-              'Could not post the card.'
-            );
-          }
-        }
-      );
-  }
+  ====================================================== */
 
   function wrapText(
-    ctx,
+    context,
     text,
     x,
     y,
     maxWidth,
-    lineHeight
+    lineHeight,
+    maxLines = 8
   ) {
-
     const words =
       text.split(/\s+/);
 
     let line = '';
+    let lines = [];
 
     for (const word of words) {
-
       const test =
         line
           ? `${line} ${word}`
           : word;
 
       if (
-        ctx.measureText(test)
-          .width > maxWidth &&
+        context.measureText(
+          test
+        ).width > maxWidth &&
         line
       ) {
-
-        ctx.fillText(
-          line,
-          x,
-          y
-        );
-
+        lines.push(line);
         line = word;
-        y += lineHeight;
 
+        if (
+          lines.length >=
+          maxLines
+        ) {
+          break;
+        }
       } else {
-
         line = test;
       }
     }
 
-    if (line) {
-
-      ctx.fillText(
-        line,
-        x,
-        y
-      );
+    if (
+      line &&
+      lines.length <
+        maxLines
+    ) {
+      lines.push(line);
     }
+
+    lines.forEach(
+      (current, index) => {
+        context.fillText(
+          current,
+          x,
+          y +
+            index *
+              lineHeight
+        );
+      }
+    );
+
+    return lines.length;
   }
 
-  /* =====================================================
-     FAITH
-  ====================================================== */function setupFaith() {
+  function setupCards() {
+    const form =
+      $('#cardForm');
 
-    const amen =
-      $('#amen');
+    const create =
+      $('#createCard');
 
-    if (!amen) return;
+    const preview =
+      $('#cardPreview');
 
-    amen.addEventListener(
+    if (!create) return;
+
+    create.addEventListener(
       'click',
-      event => {
-
+      async event => {
         event.preventDefault();
 
-        amen.textContent =
-          'AMEN ✓';
+        const name =
+          clean(
+            $('#cardName')?.value,
+            100
+          );
 
-        amen.disabled =
-          true;
+        const recipient =
+          clean(
+            $('#cardRecipient')?.value,
+            100
+          );
+
+        const message =
+          clean(
+            $('#cardMessage')?.value,
+            1200
+          );
+
+        const template =
+          clean(
+            $('#cardTemplate')?.value ||
+            $('#cardStyle')?.value ||
+            'Appreciation',
+            80
+          );
+
+        if (!message) {
+          toast(
+            'Write your message first.'
+          );
+          return;
+        }
+
+        const canvas =
+          document.createElement(
+            'canvas'
+          );
+
+        canvas.width = 1200;
+        canvas.height = 1500;
+
+        const ctx =
+          canvas.getContext(
+            '2d'
+          );
+
+        if (!ctx) {
+          toast(
+            'Card preview is unavailable.'
+          );
+          return;
+      }/* Elegant neutral base */
+        ctx.fillStyle =
+          '#160d20';
+
+        ctx.fillRect(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+        ctx.fillStyle =
+          'rgba(255,255,255,.08)';
+
+        ctx.fillRect(
+          55,
+          55,
+          1090,
+          1390
+        );
+
+        ctx.textAlign =
+          'center';
+
+        ctx.fillStyle =
+          '#ffffff';
+
+        ctx.font =
+          'bold 34px Arial';
+
+        ctx.fillText(
+          'BPHARM ONE',
+          600,
+          150
+        );
+
+        ctx.font =
+          '22px Arial';
+
+        ctx.fillText(
+          'CLASS OF 2029',
+          600,
+          195
+        );
+
+        ctx.font =
+          'bold 52px Arial';
+
+        ctx.fillText(
+          recipient
+            ? `For ${recipient}`
+            : 'A Little Something For You',
+          600,
+          340
+        );
+
+        ctx.textAlign =
+          'left';
+
+        ctx.font =
+          '28px Arial';
+
+        const startY =
+          470;
+
+        wrapText(
+          ctx,
+          message,
+          130,
+          startY,
+          940,
+          48,
+          14
+        );
+
+        ctx.textAlign =
+          'center';
+
+        ctx.font =
+          'bold 26px Arial';
+
+        ctx.fillText(
+          'YEAR ONE — COMPLETED',
+          600,
+          1250
+        );
+
+        ctx.font =
+          '22px Arial';
+
+        ctx.fillText(
+          'May we keep growing until 2029.',
+          600,
+          1310
+        );
+
+        ctx.font =
+          '20px Arial';
+
+        ctx.fillText(
+          name
+            ? `From ${name}`
+            : 'From BPharm One',
+          600,
+          1375
+        );
+
+        const image =
+          canvas.toDataURL(
+            'image/png'
+          );
+
+        if (preview) {
+          preview.src =
+            image;
+
+          preview.classList.add(
+            'ready'
+          );
+        }
+
+        /* Automatically save locally */
+        const link =
+          document.createElement(
+            'a'
+          );
+
+        link.href = image;
+
+        link.download =
+          `BPharm-One-${(
+            recipient ||
+            'Appreciation'
+          )
+            .replace(
+              /[^a-z0-9]/gi,
+              '-'
+            )}.png`;
+
+        document.body.appendChild(
+          link
+        );
+
+        link.click();
+        link.remove();
 
         toast(
-          'Amen.'
+          'Your card is ready.'
+        );
+
+        /* Optional shared card record */
+        if (sb) {
+          try {
+            await sb
+              .from('cards')
+              .insert({
+                name:
+                  name ||
+                  'Anonymous',
+                recipient:
+                  recipient ||
+                  'BPharm One',
+                message,
+                template
+              });
+          } catch (error) {
+            console.warn(
+              'Card record:',
+              error
+            );
+          }
+        }
+      }
+    );
+
+    if (form) {
+      form.addEventListener(
+        'submit',
+        event => {
+          event.preventDefault();
+          create?.click();
+        }
+      );
+    }
+      }
+  /* =====================================================
+     FAITH
+  ====================================================== */
+
+  function setupFaith() {
+    const button =
+      $('#amenBtn');
+
+    if (!button) return;
+
+    button.addEventListener(
+      'click',
+      event => {
+        event.preventDefault();
+
+        pulse(button);
+
+        toast(
+          'Amen. May God guide every step.'
         );
       }
     );
@@ -1964,82 +2267,80 @@ document.addEventListener('pointerup', event => {
   ====================================================== */
 
   function setupCapsule() {
+    const button =
+      $('#sealCapsule');
 
-    const seal =
-      $('#seal');
+    if (!button) return;
 
-    if (!seal) return;
-
-    seal.addEventListener(
+    button.addEventListener(
       'click',
       async event => {
-
         event.preventDefault();
-
-        if (!sb) {
-
-          toast(
-            'Time capsule is unavailable.'
-          );
-
-          return;
-        }
 
         const message =
           clean(
-            $('#capsuleText')?.value,
-            800
+            $('#capsuleMessage')?.value,
+            1500
           );
-
-        if (!message) {
-
-          toast(
-            'Write your message first.'
-          );
-
-          return;
-        }
 
         const name =
           clean(
-            prompt(
-              'Your name (optional):'
-            ),
-            80
+            $('#capsuleName')?.value,
+            100
           ) ||
           'Anonymous';
 
+        if (!message) {
+          toast(
+            'Write your message first.'
+          );
+          return;
+        }
+
+        if (!sb) {
+          toast(
+            'The time capsule service is unavailable.'
+          );
+          return;
+        }
+
         try {
+          setBusy(
+            button,
+            true,
+            'SEALING...'
+          );
 
           const {
             error
           } = await sb
-            .from('time_capsule')
+            .from('capsules')
             .insert({
               name,
-              message,
-              unlock_year: 2029
+              message
             });
 
           if (error) {
             throw error;
           }
 
-          $('#sealed')
-            ?.classList
-            .remove('hidden');
+          if ($('#capsuleMessage')) {
+            $('#capsuleMessage').value =
+              '';
+          }
 
-          if ($('#capsuleText')) {
-            $('#capsuleText').value =
+          if ($('#capsuleName')) {
+            $('#capsuleName').value =
               '';
           }
 
           toast(
-            '🔒 Sealed for 2029.'
+            'Message sealed for 2029.'
           );
 
-        } catch (error) {
+          pulse(button);
 
+        } catch (error) {
           console.error(
             'Time capsule:',
             error
@@ -2048,12 +2349,16 @@ document.addEventListener('pointerup', event => {
           toast(
             'Could not seal the message.'
           );
+
+        } finally {
+          setBusy(
+            button,
+            false
+          );
         }
       }
     );
-  }
-
-  /* =====================================================
+          }/* =====================================================
      REALTIME
   ====================================================== */
 
@@ -2061,46 +2366,60 @@ document.addEventListener('pointerup', event => {
     table,
     callback
   ) {
-
     if (!sb) return;
 
+    if (
+      realtimeChannels.has(table)
+    ) {
+      return;
+    }
+
     try {
-
-      sb.channel(
-        `bpharm-live-${table}`
-      )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table
-          },
-          () => {
-
-            try {
-              callback();
-            } catch (error) {
-
-              console.error(
+      const channel =
+        sb
+          .channel(
+            `bpharm-${table}`
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table
+            },
+            async payload => {
+              console.log(
                 `Realtime ${table}:`,
-                error
+                payload.eventType
+              );
+
+              try {
+                await callback(
+                  payload
+                );
+              } catch (error) {
+                console.error(
+                  `Realtime callback ${table}:`,
+                  error
+                );
+              }
+            }
+          )
+          .subscribe(
+            status => {
+              console.log(
+                `Realtime ${table}:`,
+                status
               );
             }
-          }
-        )
-        .subscribe(
-          status => {
+          );
 
-            console.log(
-              `Realtime ${table}:`,
-              status
-            );
-          }
-        );
+      realtimeChannels.set(
+        table,
+        channel
+      );
 
     } catch (error) {
-
       console.error(
         `Realtime ${table}:`,
         error
@@ -2115,9 +2434,42 @@ document.addEventListener('pointerup', event => {
       loadMessages
     );
 
+    /* A reply should refresh the wall
+       so counts update too. */
     live(
       'replies',
-      loadMessages
+      async payload => {
+
+        const messageId =
+          payload?.new?.message_id ||
+          payload?.old?.message_id;
+
+        if (
+          messageId
+        ) {
+          const openBox =
+            document.getElementById(
+              `reply-${messageId}`
+            );
+
+          if (
+            openBox &&
+            !openBox.classList.contains(
+              'hidden'
+            )
+          ) {
+            await loadReplies(
+              messageId
+            );
+          } else {
+            await updateReplyCount(
+              messageId
+            );
+          }
+        } else {
+          await loadMessages();
+        }
+      }
     );
 
     live(
@@ -2139,27 +2491,38 @@ document.addEventListener('pointerup', event => {
       'hearts',
       loadHeartCount
     );
+  }/* =====================================================
+     INITIAL DATA
+  ====================================================== */
+
+  async function loadInitialData() {
+    if (!sb) return;
+
+    await Promise.allSettled([
+      loadMessages(),
+      loadMemories(),
+      loadHeartCount()
+    ]);
   }
 
   /* =====================================================
      START
   ====================================================== */
 
-  function init() {
+  async function init() {
 
     /*
-      IMPORTANT:
-      Navigation starts BEFORE Supabase.
-      Therefore a Supabase problem can never
-      make the entire website's buttons stop working.
+      Navigation and local interactions are
+      initialized before Supabase so the site
+      remains usable even if the backend is
+      temporarily unavailable.
     */
 
     setupNavigation();
-
     setupMessages();
-setupMemories();
-setupMemoryViewer();
-setupHearts();
+    setupMemories();
+    setupMemoryViewer();
+    setupHearts();
     setupCR();
     setupCards();
     setupFaith();
@@ -2169,21 +2532,18 @@ setupHearts();
       setupSupabase();
 
     if (!connected) {
-
       console.error(
         'BPharm One: Supabase unavailable.'
       );
 
       toast(
-        'Site loaded. Shared features are temporarily unavailable.'
+        'Some shared features are temporarily unavailable.'
       );
 
       return;
     }
 
-    loadMessages();
-    loadMemories();
-    loadHeartCount();
+    await loadInitialData();
 
     setupRealtime();
 
@@ -2192,19 +2552,22 @@ setupHearts();
     );
   }
 
+  /* =====================================================
+     START SAFELY
+  ====================================================== */
+
   if (
     document.readyState ===
     'loading'
   ) {
-
     document.addEventListener(
       'DOMContentLoaded',
       init,
-      { once: true }
+      {
+        once: true
+      }
     );
-
   } else {
-
     init();
   }
 
