@@ -1828,159 +1828,228 @@
   }
 
   function setupCR() {
-    $$(".cr-card").forEach(
-      (card, index) => {
-        const crId =
-          card.dataset.crId ||
-          String(index + 1);
+  /* =======================================================
+     CREATE CR APPRECIATION AREAS
+     ======================================================= */
 
-        card.dataset.crId = crId;
+  $$(".cr-card").forEach((card, index) => {
+    const crId =
+      card.dataset.crId ||
+      String(index + 1);
 
-        const toggle =
-          $(".cr-toggle", card);
+    card.dataset.crId = crId;
 
-        toggle?.addEventListener(
-          "click",
-          () => {
-            card.classList.toggle(
-              "expanded"
-            );            toggle.textContent =
-              card.classList.contains(
-                "expanded"
-              )
-                ? "READ LESS"
-                : "READ MORE";
-          }
+    let box =
+      $(".cr-appreciation-box", card);
+
+    if (!box) {
+      box = document.createElement("div");
+
+      box.className =
+        "cr-appreciation-box";
+
+      box.innerHTML = `
+        <strong>
+          ❤️ SAY THANK YOU
+        </strong>
+
+        <p
+          style="
+            color:var(--muted);
+            font-size:11px;
+            line-height:1.6;
+            margin-top:6px;
+          "
+        >
+          A small message can remind a representative
+          that their work mattered.
+        </p>
+
+        <input
+          type="text"
+          maxlength="80"
+          data-cr-name
+          placeholder="Your name"
+          autocomplete="name"
+        >
+
+        <textarea
+          maxlength="250"
+          rows="3"
+          data-cr-message
+          placeholder="Write a short appreciation..."
+        ></textarea>
+
+        <button
+          type="button"
+          class="tiny-action"
+          data-appreciate-cr="${esc(crId)}"
+          style="margin-top:8px"
+        >
+          ❤️ APPRECIATE
+        </button>
+
+        <div
+          class="cr-appreciation-results"
+          data-cr-results="${esc(crId)}"
+        >
+          <div class="cr-count">
+            Loading appreciation...
+          </div>
+        </div>
+      `;
+
+      card.appendChild(box);
+    }
+
+    const results =
+      $(
+        `[data-cr-results="${CSS.escape(crId)}"]`,
+        card
+      );
+
+    if (sb && results) {
+      loadCRAppreciations(
+        crId,
+        results
+      );
+    }
+  });
+
+  /* =======================================================
+     READ MORE / READ LESS
+     EVENT DELEGATION
+     ======================================================= */
+
+  document.addEventListener(
+    "click",
+    (event) => {
+      const toggle =
+        event.target.closest(
+          ".cr-toggle"
         );
 
-        let box =
-          $(".cr-appreciation-box", card);
+      if (!toggle) return;
 
-        if (!box) {
-          box =
-            document.createElement(
-              "div"
-            );
+      event.preventDefault();
+      event.stopPropagation();
 
-          box.className =
-            "cr-appreciation-box";
+      const card =
+        toggle.closest(".cr-card");
 
-          box.innerHTML = `
-            <strong>
-              ❤️ SAY THANK YOU
-            </strong>
+      if (!card) return;
 
-            <p
-              style="
-                color:var(--muted);
-                font-size:11px;
-                line-height:1.6;
-                margin-top:6px;
-              "
-            >
-              A small message can remind a representative
-              that their work mattered.
-            </p>
-
-            <input
-              type="text"
-              maxlength="80"
-              data-cr-name
-              placeholder="Your name"
-            >
-
-            <textarea
-              maxlength="250"
-              rows="3"
-              data-cr-message
-              placeholder="Write a short appreciation..."
-            ></textarea>
-
-            <button
-              type="button"
-              class="tiny-action"
-              data-appreciate-cr="${esc(
-                crId
-              )}"
-              style="margin-top:8px"
-            >
-              ❤️ APPRECIATE
-            </button>
-
-            <div
-              class="cr-appreciation-results"
-              data-cr-results="${esc(
-                crId
-              )}"
-            >
-              <div class="cr-count">
-                Loading appreciation...
-              </div>
-            </div>
-          `;
-
-          card.appendChild(box);
-        }
-
-        loadCRAppreciations(
-          crId,
-          $(
-            `[data-cr-results="${CSS.escape(
-              crId
-            )}"]`,
-            card
-          )
+      const expanded =
+        card.classList.toggle(
+          "expanded"
         );
+
+      toggle.textContent =
+        expanded
+          ? "READ LESS"
+          : "READ MORE";
+    }
+  );
+
+  /* =======================================================
+     APPRECIATION SUBMISSION
+     ======================================================= */
+
+  document.addEventListener(
+    "click",
+    async (event) => {
+      const button =
+        event.target.closest(
+          "[data-appreciate-cr]"
+        );
+
+      if (!button) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!sb) {
+        toast(
+          "Appreciation service is unavailable."
+        );
+
+        return;
       }
-    );
 
-    document.addEventListener(
-      "click",
-      async (event) => {
-        const button =
-          event.target.closest(
-            "[data-appreciate-cr]"
-          );
-
-        if (!button) return;
-
-        const card =
-          button.closest(".cr-card");
-
-        if (!card || !sb) return;
-
-        const crId =
-          button.dataset
-            .appreciateCr;
-
-        const name =
-          clean(
-            $("[data-cr-name]", card)
-              ?.value,
-            80
-          );
-
-        const message =
-          clean(
-            $("[data-cr-message]", card)
-              ?.value,
-            250
-          );
-
-        if (!message) {
-          toast(
-            "Write a short appreciation first."
-          );
-
-          return;
-        }
-
-        busy(
-          button,
-          true,
-          "SAVING..."
+      const box =
+        button.closest(
+          ".cr-appreciation-box"
         );
 
+      const card =
+        button.closest(".cr-card");
+
+      if (!box || !card) {
+        toast(
+          "Appreciation form could not be found."
+        );
+
+        return;
+      }
+
+      const crId =
+        button.dataset.appreciateCr;
+
+      /* Get the fields from THIS appreciation box */
+      const nameInput =
+        $(
+          "[data-cr-name]",
+          box
+        );
+
+      const messageInput =
+        $(
+          "[data-cr-message]",
+          box
+        );
+
+      const name =
+        clean(
+          nameInput?.value || "",
+          80
+        );
+
+      const message =
+        clean(
+          messageInput?.value || "",
+          250
+        );
+
+      /* Debug information */
+      console.log(
+        "CR appreciation:",
+        {
+          crId,
+          name,
+          message,
+          messageLength:
+            message.length,
+        }
+      );
+
+      /* Validate the actual textarea */
+      if (!message) {
+        toast(
+          "Please enter your appreciation first."
+        );
+
+        messageInput?.focus();
+
+        return;
+      }
+
+      busy(
+        button,
+        true,
+        "SAVING..."
+      );
+
+      try {
         const result =
           await sb
             .from("cr_appreciations")
@@ -1988,7 +2057,7 @@
               cr_id: crId,
               name:
                 name || "Anonymous",
-              message,
+              message: message,
             });
 
         if (result.error) {
@@ -2002,18 +2071,17 @@
               result.error.message
           );
 
-          busy(button, false);
-
           return;
         }
 
-        $("[data-cr-name]", card).value =
-          "";
+        /* Clear only after successful save */
+        if (nameInput) {
+          nameInput.value = "";
+        }
 
-        $("[data-cr-message]", card).value =
-          "";
-
-        busy(button, false);
+        if (messageInput) {
+          messageInput.value = "";
+        }
 
         toast(
           `Appreciation sent to ${
@@ -2022,19 +2090,39 @@
           }.`
         );
 
-        await loadCRAppreciations(
-          crId,
+        /* Refresh appreciation list */
+        const results =
           $(
             `[data-cr-results="${CSS.escape(
               crId
             )}"]`,
             card
-          )
+          );
+
+        if (results) {
+          await loadCRAppreciations(
+            crId,
+            results
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Unexpected CR appreciation error:",
+          error
+        );
+
+        toast(
+          "Something went wrong while saving the appreciation."
+        );
+      } finally {
+        busy(
+          button,
+          false
         );
       }
-    );
-  }
-
+    }
+  );
+}
 /* =========================================================
      CARD STUDIO
      ========================================================= */
@@ -2590,18 +2678,18 @@
 
     setupHearts();
 
-    setupMessages();
+setupMessages();
 
-    setupCR();
+setupCards();
 
-    setupCards();
+setupFaith();
 
-    setupFaith();
+addInstructions();
 
-    addInstructions();
+const connected =
+  setupSupabase();
 
-    const connected =
-      setupSupabase();
+setupCR();
 
     if (!connected) {
       toast(
