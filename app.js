@@ -1827,265 +1827,121 @@
     `;
   }
 
-  function setupCR() {
-    $$(".cr-card").forEach(
-      (card, index) => {
-        const crId =
-          card.dataset.crId ||
-          String(index + 1);
+function setupCR() {
+  $$(".cr-card").forEach((card, index) => {
+    const crId =
+      card.dataset.crId ||
+      String(index + 1);
 
-        card.dataset.crId = crId;
+    card.dataset.crId = crId;
 
-        let box =
-          $(".cr-appreciation-box", card);
+    const toggle = $(".cr-toggle", card);
 
-        if (!box) {
-          box =
-            document.createElement(
-              "div"
-            );
+    toggle?.addEventListener("click", () => {
+      card.classList.toggle("expanded");
 
-          box.className =
-            "cr-appreciation-box";
+      toggle.textContent =
+        card.classList.contains("expanded")
+          ? "READ LESS"
+          : "READ MORE";
+    });
 
-          box.innerHTML = `
-            <strong>
-              ❤️ SAY THANK YOU
-            </strong>
+    const box =
+      $(".cr-appreciation-box", card);
 
-            <p
-              style="
-                color:var(--muted);
-                font-size:11px;
-                line-height:1.6;
-                margin-top:6px;
-              "
-            >
-              A small message can remind a representative
-              that their work mattered.
-            </p>
+    if (!box) return;
 
-            <input
-              type="text"
-              maxlength="80"
-              data-cr-name
-              placeholder="Your name"
-            >
+    const nameInput =
+      $(".cr-appreciation-name", box);
 
-            <textarea
-              maxlength="250"
-              rows="3"
-              data-cr-message
-              placeholder="Write a short appreciation..."
-            ></textarea>
+    const messageInput =
+      $(".cr-appreciation-message", box);
 
-            <button
-              type="button"
-              class="tiny-action"
-              data-appreciate-cr="${esc(
-                crId
-              )}"
-              style="margin-top:8px"
-            >
-              ❤️ APPRECIATE
-            </button>
+    const list =
+      $(".cr-appreciation-list", box);
 
-            <div
-              class="cr-appreciation-results"
-              data-cr-results="${esc(
-                crId
-              )}"
-            >
-              <div class="cr-count">
-                Loading appreciation...
-              </div>
-            </div>
-          `;
+    loadCRAppreciations(crId, list);
+  });
 
-          card.appendChild(box);
-        }
-      }
+  document.addEventListener("click", async (event) => {
+    const button =
+      event.target.closest("[data-appreciate-cr]");
+
+    if (!button) return;
+
+    const card =
+      button.closest(".cr-card");
+
+    if (!card || !sb) return;
+
+    const crId =
+      card.dataset.crId;
+
+    const name =
+      clean(
+        $(".cr-appreciation-name", card)?.value,
+        60
+      );
+
+    const message =
+      clean(
+        $(".cr-appreciation-message", card)?.value,
+        220
+      );
+
+    if (!message) {
+      toast("Write a short appreciation first.");
+      return;
+    }
+
+    busy(
+      button,
+      true,
+      "SAVING..."
     );
 
-    document.addEventListener(
-      "click",
-      async (event) => {
+    const result =
+      await sb
+        .from("cr_appreciations")
+        .insert({
+          cr_id: crId,
+          name: name || "Anonymous",
+          message: message
+        });
 
-        const toggle =
-          event.target.closest(
-            ".cr-toggle"
-          );
+    if (result.error) {
+      console.error(
+        "CR appreciation insert:",
+        result.error
+      );
 
-        if (toggle) {
-          const card =
-            toggle.closest(".cr-card");
+      toast(
+        "Could not save appreciation: " +
+        result.error.message
+      );
 
-          if (!card) return;
+      busy(button, false);
+      return;
+    }
 
-          card.classList.toggle(
-            "expanded"
-          );
+    $(".cr-appreciation-name", card).value = "";
+    $(".cr-appreciation-message", card).value = "";
 
-          toggle.textContent =
-            card.classList.contains(
-              "expanded"
-            )
-              ? "READ LESS"
-              : "READ MORE";
+    busy(button, false);
 
-          return;
-        }
-
-        const button =
-          event.target.closest(
-            "[data-appreciate-cr]"
-          );
-
-        if (!button) return;
-
-        const card =
-          button.closest(".cr-card");
-
-        if (!card) return;
-
-        if (!sb) {
-          toast(
-            "Appreciation service is unavailable."
-          );
-
-          return;
-        }
-
-        const box =
-          button.closest(
-            ".cr-appreciation-box"
-          );
-
-        if (!box) {
-          toast(
-            "Appreciation form not found."
-          );
-
-          return;
-        }
-
-        const crId =
-          button.dataset
-            .appreciateCr;
-
-        const nameInput =
-          $("[data-cr-name]", box);
-
-        const messageInput =
-          $("[data-cr-message]", box);
-
-        const name =
-          clean(
-            nameInput?.value,
-            80
-          );
-
-        const message =
-          clean(
-            messageInput?.value,
-            250
-          );
-
-        if (!message) {
-          toast(
-            "Write a short appreciation first."
-          );
-
-          messageInput?.focus();
-
-          return;
-        }
-
-        busy(
-          button,
-          true,
-          "SAVING..."
-        );
-
-        const result =
-          await sb
-            .from("cr_appreciations")
-            .insert({
-              cr_id: crId,
-              name:
-                name || "Anonymous",
-              message,
-            });
-
-        if (result.error) {
-          console.error(
-            "CR appreciation insert:",
-            result.error
-          );
-
-          toast(
-            "Could not save appreciation: " +
-              result.error.message
-          );
-
-          busy(button, false);
-
-          return;
-        }
-
-        if (nameInput) {
-          nameInput.value = "";
-        }
-
-        if (messageInput) {
-          messageInput.value = "";
-        }
-
-        busy(
-          button,
-          false
-        );
-
-        toast(
-          `Appreciation sent to ${
-            CR_NAMES[crId] ||
-            "the representative"
-          }.`
-        );
-
-        await loadCRAppreciations(
-          crId,
-          $(
-            `[data-cr-results="${CSS.escape(
-              crId
-            )}"]`,
-            card
-          )
-        );
-      }
+    toast(
+      `Appreciation sent to ${
+        CR_NAMES[crId] ||
+        "the representative"
+      }.`
     );
 
-    $$(".cr-card").forEach(
-      (card) => {
-        const crId =
-          card.dataset.crId;
-
-        const results =
-          $(
-            `[data-cr-results="${CSS.escape(
-              crId
-            )}"]`,
-            card
-          );
-
-        loadCRAppreciations(
-          crId,
-          results
-        );
-      }
+    await loadCRAppreciations(
+      crId,
+      $(".cr-appreciation-list", card)
     );
-  }            
-             
+  });
+}                      
           
 /* =========================================================
      CARD STUDIO
