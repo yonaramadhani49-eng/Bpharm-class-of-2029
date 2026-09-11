@@ -1904,10 +1904,11 @@ function setupCR() {
       await sb
         .from("cr_appreciations")
         .insert({
-          cr_id: crId,
-          name: name || "Anonymous",
-          message: message
-        });
+  cr_id: crId,
+  cr_name: card.dataset.crName || "",
+  sender_name: name || "Anonymous",
+  appreciation: message
+});
 
     if (result.error) {
       console.error(
